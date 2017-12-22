@@ -1,0 +1,140 @@
+package com.shuishou.retailer.indent.models;
+
+import java.io.Serializable;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+import org.hibernate.Criteria;
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Restrictions;
+import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Service;
+
+import com.google.common.collect.Lists;
+import com.shuishou.retailer.ConstantValue;
+import com.shuishou.retailer.models.BaseDataAccessor;
+
+@Repository
+public class IndentDataAccessor extends BaseDataAccessor implements IIndentDataAccessor {
+
+	@Override
+	public Serializable save(Indent indent) {
+		return sessionFactory.getCurrentSession().save(indent);
+	}
+
+	@Override
+	public void update(Indent indent) {
+		sessionFactory.getCurrentSession().update(indent);
+	}
+
+	@Override
+	public void delete(Indent indent) {
+		sessionFactory.getCurrentSession().delete(indent);
+	}
+
+	@Override
+	public Indent getIndentById(int id) {
+		String hql = "from Indent where id="+id;
+		return (Indent) sessionFactory.getCurrentSession().createQuery(hql).uniqueResult();
+	}
+
+	@Override
+	public List<Indent> getAllIndent() {
+		String hql = "from Indent";
+		return sessionFactory.getCurrentSession().createQuery(hql).list();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<Indent> getIndents(int start, int limit, Date starttime, Date endtime, String payway, String member, List<String> orderBys, List<String> orderByDescs) {
+		Criteria c = sessionFactory.getCurrentSession().createCriteria(Indent.class);
+		if (starttime != null)
+			c.add(Restrictions.ge("startTime", starttime));
+		if (endtime != null)
+			c.add(Restrictions.le("startTime", endtime));
+		if (payway != null && payway.length() > 0){
+			c.add(Restrictions.ilike("payway", payway));
+		}
+		if (member != null && member.length() > 0){
+			c.add(Restrictions.ilike("member", member));
+		}
+		if (orderBys != null && !orderBys.isEmpty()){
+			for (int i = 0; i < orderBys.size(); i++) {
+				c.addOrder(Order.asc(orderBys.get(i)));
+			}
+		}
+		if (orderByDescs != null && !orderByDescs.isEmpty()){
+			for (int i = 0; i < orderByDescs.size(); i++) {
+				c.addOrder(Order.desc(orderByDescs.get(i)));
+			}
+		}
+		c.setFirstResult(start);
+		c.setMaxResults(limit);
+		return (List<Indent>)c.list();
+	}
+	
+	@Override
+	public int getIndentCount(Date starttime, Date endtime, String payway, String member) {
+		String countStmt = "select count(l) from Indent l";
+		List<String> condList = Lists.newArrayList();
+		if (starttime != null){
+			condList.add("l.startTime >= :starttime");
+		}
+		if (endtime != null){
+			condList.add("l.startTime <= :endtime");
+		}
+		if (payway != null && payway.length() > 0){
+			condList.add("l.payway = :payway");
+		}
+		if (member != null && member.length() > 0){
+			condList.add("l.member = :member");
+		}
+		for (int i = 0; i < condList.size(); i++) {
+			countStmt += (i == 0 ? " where " : " and ") + condList.get(i);
+		}
+		Query query = sessionFactory.getCurrentSession().createQuery(countStmt);
+		if (starttime != null){
+			query.setTimestamp("starttime", starttime);
+		}
+		if (endtime != null){
+			query.setTimestamp("endtime", endtime);
+		}
+		if (payway != null && payway.length() > 0){
+			query.setParameter("payway", payway);
+		}
+		if (member != null && member.length() > 0){
+			query.setParameter("member", member);
+		}
+		return (int)(long)query.uniqueResult();
+	}
+
+	@Override
+	public List<Indent> getUnpaidIndent() {
+		String hql = "from Indent where status = " + ConstantValue.INDENT_STATUS_OPEN;
+		return sessionFactory.getCurrentSession().createQuery(hql).list();
+	}
+	
+	@Override
+	public List<Indent> getUnpaidIndent(String deskName) {
+		String hql = "from Indent where status = " + ConstantValue.INDENT_STATUS_OPEN + " and deskName='"+deskName+"'";
+		return sessionFactory.getCurrentSession().createQuery(hql).list();
+	}
+
+	/**
+	 * query the indent records which are paid between the period
+	 * @param starttime cannot be null
+	 * @param endtime cannot be null
+	 */
+	@Override
+	public List<Indent> getIndentsByPaidTime(Date starttime, Date endtime) {
+		Criteria c = sessionFactory.getCurrentSession().createCriteria(Indent.class);
+		c.add(Restrictions.eq("status", ConstantValue.INDENT_STATUS_PAID));
+		c.add(Restrictions.ge("endTime", starttime));
+		c.add(Restrictions.le("endTime", endtime));
+		return (List<Indent>)c.list();
+	}
+
+}

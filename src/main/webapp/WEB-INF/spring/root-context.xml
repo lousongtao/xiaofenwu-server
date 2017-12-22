@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:beans="http://www.springframework.org/schema/beans"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+  
+  <!--  Bitronix Transaction Manager embedded configuration -->
+  <!-- 
+  <beans:bean id="btmConfig" factory-method="getConfiguration" class="bitronix.tm.TransactionManagerServices">
+    <beans:property name="serverId" value="mol-jvm-mt" />
+    <beans:property name="journal" value="null" />
+  </beans:bean>
+  -->
+  <!-- Root Context: defines shared resources visible to all other web components -->
+  
+</beans>
