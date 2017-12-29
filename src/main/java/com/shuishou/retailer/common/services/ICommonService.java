@@ -7,19 +7,23 @@ import com.shuishou.retailer.views.ObjectResult;
 
 public interface ICommonService {
 	
-	ObjectResult saveOpenCashdrawerCode(long userId, String oldCode, String code);
+	ObjectResult saveOpenCashdrawerCode(int userId, String oldCode, String code);
+	
+	ObjectResult saveBranchName(int userId, String branchName);
+	
+	ObjectResult saveMemberManagementWay(int userId, boolean byScore, boolean byDeposit, double scorePerDollar);
 	
 	ObjectListResult getDiscountTemplates();
 	
-	ObjectResult saveDiscountTemplate(long userId, String name, double rate);
+	ObjectResult saveDiscountTemplate(int userId, String name, double rate);
 	
-	ObjectResult deleteDiscountTemplate(long userId, int id);
+	ObjectResult deleteDiscountTemplate(int userId, int id);
 	
 	ObjectListResult getPayWays();
 	
-	ObjectResult savePayWay(long userId, String name);
+	ObjectResult savePayWay(int userId, String name);
 	
-	ObjectResult deletePayWay(long userId, int id);
+	ObjectResult deletePayWay(int userId, int id);
 	
 	ObjectResult uploadErrorLog(String machineCode, MultipartFile logfile);
 	

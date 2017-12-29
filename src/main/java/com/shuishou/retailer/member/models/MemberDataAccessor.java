@@ -20,6 +20,12 @@ public class MemberDataAccessor extends BaseDataAccessor implements IMemberDataA
 		String hql = "from Member where id = "+id;
 		return (Member) sessionFactory.getCurrentSession().createQuery(hql).uniqueResult();
 	}
+	
+	@Override
+	public Member getMemberByCard(String card) {
+		String hql = "from Member where memberCard = '"+card+"'";
+		return (Member) sessionFactory.getCurrentSession().createQuery(hql).uniqueResult();
+	}
 
 	@Override
 	public List<Member> queryMember(String name, String memberCard, String address,

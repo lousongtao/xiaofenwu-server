@@ -14,6 +14,7 @@ public interface IGoodsService {
 	public ObjectResult addCategory2(int userId, String name, int sequence, int category1Id);
 	public ObjectResult addGoods(int userId, String name, String barcode, double sellPrice, double buyPrice, double memeberPrice, int leftAmount, int category2Id);
 	public ObjectResult importGoods(int userId, int goodsId, int importAmount);
+	public ObjectResult changeGoodsAmount(int userId, int goodsId, int newAmount);
 	public ObjectResult refundGoods(int userId, int goodsId, int refundAmount);
 	
 	public ObjectResult updateCategory1(int userId, int id, String name, int sequence);

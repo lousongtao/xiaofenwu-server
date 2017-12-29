@@ -1,5 +1,7 @@
 package com.shuishou.retailer;
 
+import java.util.Date;
+
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -13,6 +15,7 @@ public class BaseController {
 	
 	@ExceptionHandler(value = Throwable.class)
     public void defaultErrorHandler(Throwable e)  {
+		logger.error(ConstantValue.DFYMDHMS.format(new Date()));
         logger.error("", e);
         e.printStackTrace();
     }

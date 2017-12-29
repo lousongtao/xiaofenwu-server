@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.shuishou.retailer.ConstantValue;
 
 @Entity
-@Table(indexes = {@Index(name = "idx_starttime", columnList = "createtime")})
+@Table(indexes = {@Index(name = "idx_starttime", columnList = "createtime"), @Index(name="idx_membercard", columnList = "member_card")})
 public class Indent {
 
 	@Id

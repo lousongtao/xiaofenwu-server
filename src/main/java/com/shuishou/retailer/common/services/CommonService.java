@@ -102,7 +102,7 @@ public class CommonService implements ICommonService {
 	
 	@Override
 	@Transactional
-	public ObjectResult saveOpenCashdrawerCode(long userId, String oldCode, String code) {
+	public ObjectResult saveOpenCashdrawerCode(int userId, String oldCode, String code) {
 		Configs c = configsDA.getConfigsByName(ConstantValue.CONFIGS_OPENCASHDRAWERCODE);
 		if (c == null){
 			c = new Configs();
@@ -120,6 +120,58 @@ public class CommonService implements ICommonService {
 
 		return new ObjectResult(Result.OK, true);
 	}
+	
+	@Override
+	@Transactional
+	public ObjectResult saveBranchName(int userId, String branchName) {
+		Configs c = configsDA.getConfigsByName(ConstantValue.CONFIGS_BRANCHNAME);
+		if (c == null){
+			c = new Configs();
+			c.setName(ConstantValue.CONFIGS_BRANCHNAME);
+		} 
+		c.setValue(branchName);
+		configsDA.saveConfigs(c);
+		// write log.
+		UserData selfUser = userDA.getUserById(userId);
+		logService.write(selfUser, LogData.LogType.CHANGE_CONFIG.toString(), "User "+ selfUser + " change branch name " + branchName);
+
+		return new ObjectResult(Result.OK, true);
+	}
+	
+	@Override
+	@Transactional
+	public ObjectResult saveMemberManagementWay(int userId, boolean byScore, boolean byDeposit, double scorePerDollar) {
+		Configs c = configsDA.getConfigsByName(ConstantValue.CONFIGS_MEMBERMGR_BYDEPOSIT);
+		if (c == null){
+			c = new Configs();
+			c.setName(ConstantValue.CONFIGS_MEMBERMGR_BYDEPOSIT);
+		}
+		c.setValue(String.valueOf(byDeposit));
+		configsDA.saveConfigs(c);
+		
+		c = configsDA.getConfigsByName(ConstantValue.CONFIGS_MEMBERMGR_BYSCORE);
+		if (c == null){
+			c = new Configs();
+			c.setName(ConstantValue.CONFIGS_MEMBERMGR_BYSCORE);
+		}
+		c.setValue(String.valueOf(byScore));
+		configsDA.saveConfigs(c);
+		
+		c = configsDA.getConfigsByName(ConstantValue.CONFIGS_MEMBERMGR_SCOREPERDOLLAR);
+		if (c == null){
+			c = new Configs();
+			c.setName(ConstantValue.CONFIGS_MEMBERMGR_SCOREPERDOLLAR);
+		}
+		c.setValue(String.valueOf(scorePerDollar));
+		configsDA.saveConfigs(c);
+		
+		// write log.
+		UserData selfUser = userDA.getUserById(userId);
+		logService.write(selfUser, LogData.LogType.CHANGE_CONFIG.toString(), "User "+ selfUser + " change member management way. byScore = " 
+				+ byScore + ", byDeposit = " + byDeposit + ", scorePerDollar = "+ scorePerDollar);
+
+		return new ObjectResult(Result.OK, true);
+	}
 
 	@Override
 	@Transactional
@@ -130,7 +182,7 @@ public class CommonService implements ICommonService {
 
 	@Override
 	@Transactional
-	public ObjectResult saveDiscountTemplate(long userId, String name, double rate) {
+	public ObjectResult saveDiscountTemplate(int userId, String name, double rate) {
 		DiscountTemplate t = new DiscountTemplate();
 		t.setName(name);
 		t.setRate(rate);
@@ -146,7 +198,7 @@ public class CommonService implements ICommonService {
 
 	@Override
 	@Transactional
-	public ObjectResult deleteDiscountTemplate(long userId, int id) {
+	public ObjectResult deleteDiscountTemplate(int userId, int id) {
 		DiscountTemplate t = discountTemplateDA.getDiscountTemplateById(id);
 		if (t == null)
 			return new ObjectResult("No Discount Template found, id = "+ id, false);
@@ -184,7 +236,7 @@ public class CommonService implements ICommonService {
 
 	@Override
 	@Transactional
-	public ObjectResult savePayWay(long userId, String name) {
+	public ObjectResult savePayWay(int userId, String name) {
 		PayWay payWay = new PayWay();
 		payWay.setName(name);
 		payWayDA.insertPayWay(payWay);
@@ -199,7 +251,7 @@ public class CommonService implements ICommonService {
 
 	@Override
 	@Transactional
-	public ObjectResult deletePayWay(long userId, int id) {
+	public ObjectResult deletePayWay(int userId, int id) {
 		PayWay payWay = payWayDA.getPayWayById(id);
 		if (payWay == null)
 			return new ObjectResult("No Payway found, id = "+ id, false);

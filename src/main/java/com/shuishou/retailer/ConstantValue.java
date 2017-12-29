@@ -52,10 +52,7 @@ public class ConstantValue {
 	public static final String INDENT_PAYWAY_BANKCARD = "bankcard";//刷卡
 	public static final String INDENT_PAYWAY_MEMBER = "member";//会员
 	
-//	public static final byte INDENTDETAIL_OPERATIONTYPE_ADD = 1;//deprecated
 	public static final byte INDENTDETAIL_OPERATIONTYPE_DELETE = 2;
-//	public static final byte INDENTDETAIL_OPERATIONTYPE_ADDAMOUNT = 3;//no use any more
-//	public static final byte INDENTDETAIL_OPERATIONTYPE_MINUSAMOUNT = 4;// no use any more
 	public static final byte INDENTDETAIL_OPERATIONTYPE_CHANGEAMOUNT = 5;
 	
 	public static final byte MENUCHANGE_TYPE_SOLDOUT = 0;
@@ -64,10 +61,11 @@ public class ConstantValue {
 	public static final byte PRINT_STYLE_SEPARATELY = 1;
 	public static final byte PRINTER_TYPE_COUNTER = 1;
 	public static final byte PRINTER_TYPE_KITCHEN = 2;
-//	public static final byte SHIFTWORK_ONWORK = 0;
-//	public static final byte SHIFTWORK_OFFWORK = 1;
 	
-	
+	public static final String CONFIGS_BRANCHNAME= "BRANCHNAME";
+	public static final String CONFIGS_MEMBERMGR_BYSCORE= "MEMBERMGR_BYSCORE";
+	public static final String CONFIGS_MEMBERMGR_BYDEPOSIT = "MEMBERMGR_BYDEPOSIT";
+	public static final String CONFIGS_MEMBERMGR_SCOREPERDOLLAR = "MEMBERMGR_SCOREPERDOLLAR";
 	public static final String CONFIGS_OPENCASHDRAWERCODE = "OPENCASHDRAWERCODE";
 	
 	public static final int STATISTICS_DIMENSTION_PAYWAY = 1;
@@ -84,4 +82,7 @@ public class ConstantValue {
 	public static final int MATERIAL_ALARMSTATUS_NOALARM = 1;
 	public static final int MATERIAL_ALARMSTATUS_ALARMACCEPTED = 2;
 	public static final int MATERIAL_ALARMSTATUS_ALARMDELAY = 3;
+	
+	public static final int INDENTTYPE_CONSUM = 1;
+	public static final int INDENTTYPE_REFUND = 2;
 }

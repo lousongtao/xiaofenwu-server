@@ -243,6 +243,25 @@ public class GoodsService implements IGoodsService {
 		
 		return new ObjectResult(Result.OK, true, goods);
 	}
+	
+	@Override
+	@Transactional
+	public ObjectResult changeGoodsAmount(int userId, int goodsId, int newAmount) {
+		Goods goods = goodsDA.getGoodsById(goodsId);
+		if (goods == null){
+			return new ObjectResult("cannot find goods by id " + goodsId, false, null);
+		}
+		int oldAmount = goods.getLeftAmount();
+		goods.setLeftAmount(newAmount);
+		goodsDA.save(goods);
+		
+		UserData selfUser = userDA.getUserById(userId);
+		logService.write(selfUser, LogData.LogType.GOODS_CHANGEAMOUNT.toString(),
+				"User " + selfUser + " change goods amount, name = " + goods.getName() 
+				+ ", from = " + oldAmount + ", to = " + newAmount);
+		
+		return new ObjectResult(Result.OK, true, goods);
+	}
 
 	@Override
 	@Transactional

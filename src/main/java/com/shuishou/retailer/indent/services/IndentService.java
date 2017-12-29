@@ -41,6 +41,12 @@ import com.shuishou.retailer.indent.models.Indent;
 import com.shuishou.retailer.indent.models.IndentDetail;
 import com.shuishou.retailer.log.models.LogData;
 import com.shuishou.retailer.log.services.ILogService;
+import com.shuishou.retailer.member.models.IMemberConsumptionDataAccessor;
+import com.shuishou.retailer.member.models.IMemberDataAccessor;
+import com.shuishou.retailer.member.models.IMemberScoreDataAccessor;
+import com.shuishou.retailer.member.models.Member;
+import com.shuishou.retailer.member.models.MemberConsumption;
+import com.shuishou.retailer.member.models.MemberScore;
 import com.shuishou.retailer.views.ObjectListResult;
 import com.shuishou.retailer.views.ObjectResult;
 import com.shuishou.retailer.views.Result;
@@ -70,13 +76,27 @@ public class IndentService implements IIndentService {
 	private IIndentDetailDataAccessor indentDetailDA;
 	
 	@Autowired
-	private HttpServletRequest request;
+	private IMemberDataAccessor memberDA;
+	
+	@Autowired
+	private IMemberScoreDataAccessor memberScoreDA;
+	
+	@Autowired
+	private IMemberConsumptionDataAccessor memberConsumptionDA;
+	
 	
 	private DecimalFormat doubleFormat = new DecimalFormat("0.00");
 	
 	@Override
 	@Transactional
 	public synchronized ObjectResult saveIndent(int userId, JSONArray jsonOrder, String payWay, double paidPrice, String memberCard) {
+		Member member = null;
+		if (memberCard != null){
+			member = memberDA.getMemberByCard(memberCard);
+			if (member == null){
+				return new ObjectResult("cannot find member by card " + memberCard, false);
+			}
+		}
 		double totalprice = 0;
 		Indent indent = new Indent();
 		indent.setCreateTime(Calendar.getInstance().getTime());
@@ -104,6 +124,50 @@ public class IndentService implements IIndentService {
 		indent.setMemberCard(memberCard);
 		indent.setPayWay(payWay);
 		indentDA.save(indent);
+		if (member != null){
+			Date time = new Date();
+			boolean byScore = false;
+			boolean byDeposit = false;
+			double scorePerDollar = 0;
+			String branchName = "";
+			List<Configs> configs = configsDA.queryConfigs();
+			for(Configs config : configs){
+				if (ConstantValue.CONFIGS_MEMBERMGR_BYSCORE.equals(config.getName())){
+					byScore = Boolean.getBoolean(config.getValue());
+				} else if (ConstantValue.CONFIGS_MEMBERMGR_SCOREPERDOLLAR.equals(config.getName())){
+					scorePerDollar = Double.parseDouble(config.getValue());
+				} else if (ConstantValue.CONFIGS_MEMBERMGR_BYDEPOSIT.equals(config.getName())){
+					byDeposit = Boolean.getBoolean(config.getValue());
+				} else if (ConstantValue.CONFIGS_BRANCHNAME.equals(config.getName())){
+					branchName = config.getValue();
+				}
+			}
+			if (byScore && scorePerDollar > 0){
+				MemberScore ms = new MemberScore();
+				ms.setDate(time);
+				ms.setAmount(scorePerDollar * paidPrice);
+				ms.setPlace(branchName);
+				ms.setType(ConstantValue.INDENTTYPE_CONSUM);
+				ms.setMember(member);
+				memberScoreDA.save(ms);
+				member.setLastModifyTime(time);
+			}
+			if (byDeposit){
+				if (member.getBalanceMoney() < paidPrice){
+					return new ObjectResult("Meber's balance is not enought to pay", false);
+				}
+				MemberConsumption mc = new MemberConsumption();
+				mc.setAmount(paidPrice);
+				mc.setDate(time);
+				mc.setMember(member);
+				mc.setPlace(branchName);
+				mc.setType(ConstantValue.INDENTTYPE_CONSUM);
+				memberConsumptionDA.save(mc);
+				member.setBalanceMoney(member.getBalanceMoney() - paidPrice);
+				member.setLastModifyTime(time);
+				memberDA.save(member);
+			}
+		}
 		
 		UserData selfUser = userDA.getUserById(userId);
 		logService.write(selfUser, LogData.LogType.INDENT_MAKE.toString(), "User " + selfUser + " make order : " + indent.getId());

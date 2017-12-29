@@ -126,7 +126,6 @@ public class GoodsController extends BaseController {
 	public @ResponseBody Result addGoods(
 			@RequestParam(value="userId", required = true) int userId, 
 			@RequestParam(value = "name", required = true) String name, 
-			@RequestParam(value = "sequence", required = true) int sequence,
 			@RequestParam(value = "barcode", required = true) String barcode,
 			@RequestParam(value = "buyPrice", required = true) double buyPrice, 
 			@RequestParam(value = "sellPrice", required = true) double sellPrice, 
@@ -144,7 +143,6 @@ public class GoodsController extends BaseController {
 			@RequestParam(value="userId", required = true) int userId,
 			@RequestParam(value="id", required = true) int id,
 			@RequestParam(value = "name", required = true) String name, 
-			@RequestParam(value = "sequence", required = true) int sequence,
 			@RequestParam(value = "barcode", required = true) String barcode,
 			@RequestParam(value = "buyPrice", required = true) double buyPrice, 
 			@RequestParam(value = "sellPrice", required = true) double sellPrice, 
@@ -167,6 +165,17 @@ public class GoodsController extends BaseController {
 		return goodsService.importGoods(userId, id, amount);
 	}
 	
+	@RequestMapping(value="/goods/changeamount", method = {RequestMethod.POST})
+	public @ResponseBody Result changeGoodsAmount(
+			@RequestParam(value="userId", required = true) int userId, 
+			@RequestParam(value="id", required = true) int id,
+			@RequestParam(value = "amount", required = true) int newAmount) throws Exception{
+		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_UPDATE_GOODS)){
+			return new Result("no_permission");
+		}
+		return goodsService.changeGoodsAmount(userId, id, newAmount);
+	}
+	
 	@RequestMapping(value="/goods/refund_goods", method = {RequestMethod.POST})
 	public @ResponseBody Result refundGoods(
 			@RequestParam(value="userId", required = true) int userId, 
@@ -179,7 +188,7 @@ public class GoodsController extends BaseController {
 	}
 	
 	@RequestMapping(value="/goods/querygoods", method = {RequestMethod.GET})
-	public @ResponseBody ObjectListResult queryMenu() throws Exception{
+	public @ResponseBody ObjectListResult queryGoods() throws Exception{
 		ObjectListResult result = goodsService.queryAllGoods();
 		return result;
 	}

@@ -54,6 +54,28 @@ public class CommonController extends BaseController {
 		return commonService.saveOpenCashdrawerCode(userId,oldCode, code);
 	}
 	
+	@RequestMapping(value="/common/savebranchname", method = {RequestMethod.POST, RequestMethod.GET})
+	public @ResponseBody Result saveBranchName(
+			@RequestParam(value = "userId", required = true) int userId,
+			@RequestParam(value="branchName", required = true) String branchName) throws Exception{
+		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_CHANGE_CONFIG)){
+			return new Result("no_permission");
+		}
+		return commonService.saveBranchName(userId, branchName);
+	}
+	
+	@RequestMapping(value="/common/savemembermanagementway", method = {RequestMethod.POST, RequestMethod.GET})
+	public @ResponseBody Result saveMemberManagementWay(
+			@RequestParam(value = "userId", required = true) int userId,
+			@RequestParam(value="byScore", required = true) boolean byScore,
+			@RequestParam(value="byDeposit", required = true) boolean byDeposit,
+			@RequestParam(value="scorePerDollar", required = false, defaultValue = "0") double scorePerDollar) throws Exception{
+		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_CHANGE_CONFIG)){
+			return new Result("no_permission");
+		}
+		return commonService.saveMemberManagementWay(userId, byScore, byDeposit, scorePerDollar);
+	}
+	
 	@RequestMapping(value="/common/getdiscounttemplates", method =  {RequestMethod.POST, RequestMethod.GET})
 	public @ResponseBody ObjectListResult getDiscountTemplates() throws Exception{
 		return commonService.getDiscountTemplates();
