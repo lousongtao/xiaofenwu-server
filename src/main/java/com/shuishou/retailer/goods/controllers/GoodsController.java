@@ -131,11 +131,12 @@ public class GoodsController extends BaseController {
 			@RequestParam(value = "sellPrice", required = true) double sellPrice, 
 			@RequestParam(value = "memberPrice", required = true) double memberPrice, 
 			@RequestParam(value = "leftAmount", required = false, defaultValue = "0") int leftAmount, 
+			@RequestParam(value = "description", required = false, defaultValue = "") String description,
 			@RequestParam(value = "category2Id", required = true) int category2Id) throws Exception{
 		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_UPDATE_GOODS)){
 			return new Result("no_permission");
 		}
-		return goodsService.addGoods(userId, name, barcode, sellPrice, buyPrice, memberPrice, leftAmount, category2Id);
+		return goodsService.addGoods(userId, name, barcode, sellPrice, buyPrice, memberPrice, leftAmount, category2Id, description);
 	}
 	
 	@RequestMapping(value="/goods/update_goods", method = {RequestMethod.POST})
@@ -147,11 +148,12 @@ public class GoodsController extends BaseController {
 			@RequestParam(value = "buyPrice", required = true) double buyPrice, 
 			@RequestParam(value = "sellPrice", required = true) double sellPrice, 
 			@RequestParam(value = "memberPrice", required = true) double memberPrice, 
+			@RequestParam(value = "description", required = false, defaultValue = "") String description,
 			@RequestParam(value = "category2Id", required = true) int category2Id) throws Exception{
 		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_UPDATE_GOODS)){
 			return new Result("no_permission");
 		}
-		return goodsService.updateGoods(userId, id, name, barcode, sellPrice, buyPrice, memberPrice, category2Id);
+		return goodsService.updateGoods(userId, id, name, barcode, sellPrice, buyPrice, memberPrice, category2Id, description);
 	}
 	
 	@RequestMapping(value="/goods/import_goods", method = {RequestMethod.POST})
