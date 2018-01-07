@@ -47,6 +47,10 @@ public class ConstantValue {
 	public static final byte INDENT_OPERATIONTYPE_CANCEL = 3;
 	public static final byte INDENT_OPERATIONTYPE_PAY = 4;
 	
+	public static final byte INDENT_TYPE_ORDER = 1;//普通订单
+	public static final byte INDENT_TYPE_REFUND = 2;//退货单
+	public static final byte INDENT_TYPE_PREBUY = 3;//预购单
+	
 	//付款方式
 	public static final String INDENT_PAYWAY_CASH = "cash";//现金
 	public static final String INDENT_PAYWAY_BANKCARD = "bankcard";//刷卡

@@ -192,7 +192,7 @@ public class GoodsService implements IGoodsService {
 	@Override
 	@Transactional
 	public ObjectResult addGoods(int userId, String name, String barcode, double sellPrice, double buyPrice,
-			double memberPrice, int leftAmount, int category2Id) {
+			double memberPrice, int leftAmount, int category2Id, String description) {
 		Category2 c2 = category2DA.getCategory2ById(category2Id);
 		if (c2 == null){
 			return new ObjectResult("cannot find category2 by id "+ category2Id, false, null);
@@ -204,6 +204,7 @@ public class GoodsService implements IGoodsService {
 		goods.setSellPrice(sellPrice);
 		goods.setMemberPrice(memberPrice);
 		goods.setLeftAmount(leftAmount);
+		goods.setDescription(description);
 		goods.setCategory2(c2);
 		goodsDA.save(goods);
 		if (leftAmount > 0){
@@ -288,7 +289,8 @@ public class GoodsService implements IGoodsService {
 	
 	@Override
 	@Transactional
-	public ObjectResult updateGoods(int userId, int goodsId, String name, String barcode, double sellPrice, double buyPrice, double memberPrice, int category2Id){
+	public ObjectResult updateGoods(int userId, int goodsId, String name, String barcode, double sellPrice, double buyPrice, 
+			double memberPrice, int category2Id, String description){
 		Goods goods = goodsDA.getGoodsById(goodsId);
 		if (goods == null){
 			return new ObjectResult("cannot find goods by id " + goodsId, false, null);
@@ -305,6 +307,7 @@ public class GoodsService implements IGoodsService {
 		goods.setBuyPrice(buyPrice);
 		goods.setSellPrice(sellPrice);
 		goods.setMemberPrice(memberPrice);
+		goods.setDescription(description);
 		goodsDA.save(goods);
 		
 		UserData selfUser = userDA.getUserById(userId);

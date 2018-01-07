@@ -123,6 +123,7 @@ public class IndentService implements IIndentService {
 		indent.setPaidPrice(paidPrice);
 		indent.setMemberCard(memberCard);
 		indent.setPayWay(payWay);
+		indent.setIndentType(ConstantValue.INDENT_TYPE_ORDER);
 		indentDA.save(indent);
 		if (member != null){
 			Date time = new Date();
@@ -150,7 +151,9 @@ public class IndentService implements IIndentService {
 				ms.setType(ConstantValue.INDENTTYPE_CONSUM);
 				ms.setMember(member);
 				memberScoreDA.save(ms);
+				member.setScore(member.getScore() + ms.getAmount());
 				member.setLastModifyTime(time);
+				memberDA.save(member);
 			}
 			if (byDeposit){
 				if (member.getBalanceMoney() < paidPrice){
@@ -233,6 +236,103 @@ public class IndentService implements IIndentService {
 
 	@Override
 	public ObjectResult printIndent(int userId, int indentId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	@Transactional
+	public ObjectResult refundIndent(int userId, JSONArray jsonOrder, double refundPrice, String memberCard, boolean returnToStorage) {
+		Member member = null;
+		if (memberCard != null && memberCard.length() > 0){
+			member = memberDA.getMemberByCard(memberCard);
+			if (member == null){
+				return new ObjectResult("cannot find member by card " + memberCard, false);
+			}
+		}
+		double totalprice = 0;
+		Indent indent = new Indent();
+		indent.setCreateTime(Calendar.getInstance().getTime());
+		for(int i = 0; i< jsonOrder.length(); i++){
+			JSONObject o = (JSONObject) jsonOrder.get(i);
+			int goodsid = o.getInt("id");
+			int amount = o.getInt("amount");
+			Goods goods = goodsDA.getGoodsById(goodsid);
+			if (goods == null){
+				return new ObjectResult("cannot find goods by id "+ goodsid, false);
+			}
+			IndentDetail detail = new IndentDetail();
+			detail.setIndent(indent);
+			detail.setGoodsId(goodsid);
+			detail.setAmount(amount);
+			detail.setGoodsName(goods.getName());
+			detail.setGoodsPrice(goods.getSellPrice());
+			indent.addItem(detail);
+			totalprice += goods.getSellPrice() * amount;
+			if (returnToStorage){
+				goods.setLeftAmount(goods.getLeftAmount() + amount);
+				goodsDA.save(goods);
+			}
+		}
+		indent.setTotalPrice(totalprice);
+		indent.setPaidPrice(refundPrice);
+		indent.setMemberCard(memberCard);
+		indent.setIndentType(ConstantValue.INDENT_TYPE_REFUND);
+		indentDA.save(indent);
+		if (member != null){
+			Date time = new Date();
+			boolean byScore = false;
+			boolean byDeposit = false;
+			double scorePerDollar = 0;
+			String branchName = "";
+			List<Configs> configs = configsDA.queryConfigs();
+			for(Configs config : configs){
+				if (ConstantValue.CONFIGS_MEMBERMGR_BYSCORE.equals(config.getName())){
+					byScore = Boolean.getBoolean(config.getValue());
+				} else if (ConstantValue.CONFIGS_MEMBERMGR_SCOREPERDOLLAR.equals(config.getName())){
+					scorePerDollar = Double.parseDouble(config.getValue());
+				} else if (ConstantValue.CONFIGS_MEMBERMGR_BYDEPOSIT.equals(config.getName())){
+					byDeposit = Boolean.getBoolean(config.getValue());
+				} else if (ConstantValue.CONFIGS_BRANCHNAME.equals(config.getName())){
+					branchName = config.getValue();
+				}
+			}
+			if (byScore && scorePerDollar > 0){
+				MemberScore ms = new MemberScore();
+				ms.setDate(time);
+				ms.setAmount(scorePerDollar * refundPrice * (-1));
+				ms.setPlace(branchName);
+				ms.setType(ConstantValue.INDENTTYPE_CONSUM);
+				ms.setMember(member);
+				memberScoreDA.save(ms);
+				member.setScore(member.getScore() + ms.getAmount());
+				member.setLastModifyTime(time);
+				memberDA.save(member);
+			}
+			if (byDeposit){
+				MemberConsumption mc = new MemberConsumption();
+				mc.setAmount(refundPrice * (-1));
+				mc.setDate(time);
+				mc.setMember(member);
+				mc.setPlace(branchName);
+				mc.setType(ConstantValue.INDENTTYPE_CONSUM);
+				memberConsumptionDA.save(mc);
+				member.setBalanceMoney(member.getBalanceMoney() + refundPrice);
+				member.setLastModifyTime(time);
+				memberDA.save(member);
+			}
+		}
+		
+		UserData selfUser = userDA.getUserById(userId);
+		logService.write(selfUser, LogData.LogType.INDENT_MAKE.toString(), "User " + selfUser + " make order : " + indent.getId());
+		
+		return new ObjectResult(Result.OK, true, null);
+	}
+
+	@Override
+	@Transactional
+	public ObjectResult prebuyIndent(int userId, JSONArray jsonOrder, String payway, double paidPrice,
+			String memberCard, boolean paid) {
 		// TODO Auto-generated method stub
 		return null;
 	}

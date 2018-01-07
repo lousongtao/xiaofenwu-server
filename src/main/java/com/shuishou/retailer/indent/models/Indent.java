@@ -50,6 +50,22 @@ public class Indent {
 	@Column(name = "member_card")
 	private String memberCard;
 	
+	/**
+	 * 区分 普通订单, 预购单, 退款单
+	 */
+	@Column(nullable = false, columnDefinition="int default("+ConstantValue.INDENT_TYPE_ORDER+")")
+	private int indentType;
+	
+	
+
+	public int getIndentType() {
+		return indentType;
+	}
+
+	public void setIndentType(int indentType) {
+		this.indentType = indentType;
+	}
+
 	public int getId() {
 		return id;
 	}

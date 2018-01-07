@@ -44,6 +44,31 @@ public class IndentController extends BaseController {
 		return indentService.saveIndent(userId, jsonOrder, payWay, paidPrice, member);
 	}
 	
+	@RequestMapping(value="/indent/refundindent", method = (RequestMethod.POST))
+	public @ResponseBody ObjectResult refundOrder(
+			@RequestParam(value = "userId", required = true) int userId,
+			@RequestParam(value="indents", required = true) String indents,
+			@RequestParam(value="refundPrice", required = true) double refundPrice,
+			@RequestParam(value="returnToStorage", required = true) boolean returnToStorage,
+			@RequestParam(value="member", required = false, defaultValue = "") String member) throws Exception{
+		JSONArray jsonOrder = new JSONArray(indents);
+		
+		return indentService.refundIndent(userId, jsonOrder, refundPrice, member, returnToStorage);
+	}
+	
+	@RequestMapping(value="/indent/prebuyindent", method = (RequestMethod.POST))
+	public @ResponseBody ObjectResult prebuyOrder(
+			@RequestParam(value = "userId", required = true) int userId,
+			@RequestParam(value="indents", required = true) String indents,
+			@RequestParam(value="payWay", required = false, defaultValue = "") String payWay,
+			@RequestParam(value="paidPrice", required = true) double paidPrice,
+			@RequestParam(value="paid", required = true) boolean paid,
+			@RequestParam(value="member", required = false, defaultValue = "") String member) throws Exception{
+		JSONArray jsonOrder = new JSONArray(indents);
+		
+		return indentService.prebuyIndent(userId, jsonOrder, payWay, paidPrice, member, paid);
+	}
+	
 	/**
 	 * 
 	 * @param pageStr

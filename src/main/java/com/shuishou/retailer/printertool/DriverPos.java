@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.log4j.Logger;
+
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.jfinal.kit.JsonKit;
@@ -25,6 +27,7 @@ import com.shuishou.retailer.printertool.param.*;
 
  */
 public class DriverPos {
+	private static Logger logger = Logger.getLogger(DriverPos.class);
 	
 	/**
 
@@ -277,7 +280,9 @@ public class DriverPos {
 	private static String addBlank(String str, int length) {
 
 		try {
+			
 			int len = str.getBytes(encoding).length;
+			logger.debug("str = " + str + ", length = " + length + ", len = " + len);
 			if (len > length) {
 				return str.substring(0, length);
 			}

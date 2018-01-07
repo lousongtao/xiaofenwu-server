@@ -44,13 +44,10 @@ public class PrintThread implements InitializingBean{
 						new DriverPos().print(readTxt(printJob.getTemplateFile(), "utf-8"),
 								JsonKit.toJson(printJob.getParam()), printJob.getPrinterName());
 						logger.debug("end print job...");
-					} catch (InterruptedException e) {
+					} catch (Exception e) {
 						logger.error("Print Error", e);
 						e.printStackTrace();
-					} catch (IOException e) {
-						logger.error("Print Error", e);
-						e.printStackTrace();
-					}
+					} 
 				}
 			}
 		}, "driverPosPrint_thread").start();
