@@ -133,11 +133,11 @@ public class IndentService implements IIndentService {
 			List<Configs> configs = configsDA.queryConfigs();
 			for(Configs config : configs){
 				if (ConstantValue.CONFIGS_MEMBERMGR_BYSCORE.equals(config.getName())){
-					byScore = Boolean.getBoolean(config.getValue());
+					byScore = Boolean.parseBoolean(config.getValue());
 				} else if (ConstantValue.CONFIGS_MEMBERMGR_SCOREPERDOLLAR.equals(config.getName())){
 					scorePerDollar = Double.parseDouble(config.getValue());
 				} else if (ConstantValue.CONFIGS_MEMBERMGR_BYDEPOSIT.equals(config.getName())){
-					byDeposit = Boolean.getBoolean(config.getValue());
+					byDeposit = Boolean.parseBoolean(config.getValue());
 				} else if (ConstantValue.CONFIGS_BRANCHNAME.equals(config.getName())){
 					branchName = config.getValue();
 				}
