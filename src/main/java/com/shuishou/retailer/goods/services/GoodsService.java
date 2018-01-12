@@ -191,7 +191,7 @@ public class GoodsService implements IGoodsService {
 
 	@Override
 	@Transactional
-	public ObjectResult addGoods(int userId, String name, String barcode, double sellPrice, double buyPrice,
+	public ObjectResult addGoods(int userId, String name, String barcode, double sellPrice, double buyPrice, double tradePrice,
 			double memberPrice, int leftAmount, int category2Id, String description) {
 		Category2 c2 = category2DA.getCategory2ById(category2Id);
 		if (c2 == null){
@@ -201,6 +201,7 @@ public class GoodsService implements IGoodsService {
 		goods.setName(name);
 		goods.setBarcode(barcode);
 		goods.setBuyPrice(buyPrice);
+		goods.setTradePrice(tradePrice);
 		goods.setSellPrice(sellPrice);
 		goods.setMemberPrice(memberPrice);
 		goods.setLeftAmount(leftAmount);
@@ -289,7 +290,7 @@ public class GoodsService implements IGoodsService {
 	
 	@Override
 	@Transactional
-	public ObjectResult updateGoods(int userId, int goodsId, String name, String barcode, double sellPrice, double buyPrice, 
+	public ObjectResult updateGoods(int userId, int goodsId, String name, String barcode, double sellPrice, double buyPrice, double tradePrice,
 			double memberPrice, int category2Id, String description){
 		Goods goods = goodsDA.getGoodsById(goodsId);
 		if (goods == null){
@@ -305,6 +306,7 @@ public class GoodsService implements IGoodsService {
 		goods.setName(name);
 		goods.setBarcode(barcode);
 		goods.setBuyPrice(buyPrice);
+		goods.setTradePrice(tradePrice);
 		goods.setSellPrice(sellPrice);
 		goods.setMemberPrice(memberPrice);
 		goods.setDescription(description);

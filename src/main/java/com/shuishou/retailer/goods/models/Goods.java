@@ -33,6 +33,7 @@ public class Goods {
 	@Column(nullable = false)
 	private String barcode;
 	
+	//进货价
 	@Column(nullable = false, scale=2)
 	private double buyPrice;
 	
@@ -42,12 +43,49 @@ public class Goods {
 	@Column(scale = 2)
 	private double memberPrice;
 	
+	//批发价
+	@Column(nullable = false, scale=2)
+	private double tradePrice;
+	
+	//是否积分
+	@Column
+	private Boolean isScore = true;
+	
+	//搜索码
+	@Column
+	private String searchCode; 
+	
 	@Column(nullable = false)
 	private int leftAmount;
 
 	@Column
 	private String description;
 	
+	
+	public double getTradePrice() {
+		return tradePrice;
+	}
+
+	public void setTradePrice(double tradePrice) {
+		this.tradePrice = tradePrice;
+	}
+
+	public Boolean isScore() {
+		return isScore;
+	}
+
+	public void setScore(Boolean isScore) {
+		this.isScore = isScore;
+	}
+
+	public String getSearchCode() {
+		return searchCode;
+	}
+
+	public void setSearchCode(String searchCode) {
+		this.searchCode = searchCode;
+	}
+
 	public int getId() {
 		return id;
 	}

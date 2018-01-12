@@ -108,7 +108,7 @@ public class Indent {
 	}
 	
 	public void setPaidPrice(double paidPrice) {
-		this.paidPrice = paidPrice;
+		this.paidPrice = Double.parseDouble(String.format(ConstantValue.FORMAT_DOUBLE, paidPrice));
 	}
 
 	public List<IndentDetail> getItems() {

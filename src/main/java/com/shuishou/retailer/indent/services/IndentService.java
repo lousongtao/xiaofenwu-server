@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.shuishou.retailer.ConstantValue;
+import com.shuishou.retailer.DataCheckException;
 import com.shuishou.retailer.account.models.IUserDataAccessor;
 import com.shuishou.retailer.account.models.UserData;
 import com.shuishou.retailer.common.models.Configs;
@@ -88,10 +89,10 @@ public class IndentService implements IIndentService {
 	private DecimalFormat doubleFormat = new DecimalFormat("0.00");
 	
 	@Override
-	@Transactional
-	public synchronized ObjectResult saveIndent(int userId, JSONArray jsonOrder, String payWay, double paidPrice, String memberCard) {
+	@Transactional(rollbackFor=DataCheckException.class)
+	public synchronized ObjectResult saveIndent(int userId, JSONArray jsonOrder, String payWay, double paidPrice, String memberCard) throws DataCheckException {
 		Member member = null;
-		if (memberCard != null){
+		if (memberCard != null && memberCard.length() > 0){
 			member = memberDA.getMemberByCard(memberCard);
 			if (member == null){
 				return new ObjectResult("cannot find member by card " + memberCard, false);
@@ -106,7 +107,8 @@ public class IndentService implements IIndentService {
 			int amount = o.getInt("amount");
 			Goods goods = goodsDA.getGoodsById(goodsid);
 			if (goods == null){
-				return new ObjectResult("cannot find goods by id "+ goodsid, false);
+//				return new ObjectResult("cannot find goods by id "+ goodsid, false);
+				throw new DataCheckException("cannot find goods by id "+ goodsid);
 			}
 			IndentDetail detail = new IndentDetail();
 			detail.setIndent(indent);
@@ -134,11 +136,11 @@ public class IndentService implements IIndentService {
 			List<Configs> configs = configsDA.queryConfigs();
 			for(Configs config : configs){
 				if (ConstantValue.CONFIGS_MEMBERMGR_BYSCORE.equals(config.getName())){
-					byScore = Boolean.getBoolean(config.getValue());
+					byScore = Boolean.valueOf(config.getValue());
 				} else if (ConstantValue.CONFIGS_MEMBERMGR_SCOREPERDOLLAR.equals(config.getName())){
 					scorePerDollar = Double.parseDouble(config.getValue());
 				} else if (ConstantValue.CONFIGS_MEMBERMGR_BYDEPOSIT.equals(config.getName())){
-					byDeposit = Boolean.getBoolean(config.getValue());
+					byDeposit = Boolean.valueOf(config.getValue());
 				} else if (ConstantValue.CONFIGS_BRANCHNAME.equals(config.getName())){
 					branchName = config.getValue();
 				}
@@ -157,7 +159,8 @@ public class IndentService implements IIndentService {
 			}
 			if (byDeposit){
 				if (member.getBalanceMoney() < paidPrice){
-					return new ObjectResult("Meber's balance is not enought to pay", false);
+//					return new ObjectResult("Meber's balance is not enought to pay", false);
+					throw new DataCheckException("Meber's balance is not enought to pay");
 				}
 				MemberConsumption mc = new MemberConsumption();
 				mc.setAmount(paidPrice);
@@ -233,7 +236,123 @@ public class IndentService implements IIndentService {
 		}
 		return new ObjectListResult(Result.OK, true, (ArrayList<Indent>)indents, count);
 	}
+	
+	@Override
+	@Transactional
+	public ObjectListResult queryPrebuyIndent(int start, int limit, String sStarttime, String sEndtime, String member) {
+		
+		Date starttime = null;
+		Date endtime = null;
+		if (sStarttime != null && sStarttime.length() > 0){
+			try {
+				starttime = ConstantValue.DFYMDHMS.parse(sStarttime);
+			} catch (ParseException e) {
+				e.printStackTrace();
+			}
+		}
+		if (sEndtime != null && sEndtime.length() > 0){
+			try {
+				endtime = ConstantValue.DFYMDHMS.parse(sEndtime);
+			} catch (ParseException e) {
+				e.printStackTrace();
+			}
+		}
+		List<Indent> indents = indentDA.getPrebuyIndents(start, limit, starttime, endtime, member);
+		if (indents == null || indents.isEmpty())
+			return new ObjectListResult(Result.OK, true, null, 0);
+		for (int i = 0; i < indents.size(); i++) {
+			Indent indent = indents.get(i);
+			Hibernate.initialize(indent);
+			Hibernate.initialize(indent.getItems());
+		}
+		return new ObjectListResult(Result.OK, true, (ArrayList<Indent>)indents, 0);
+	}
 
+	@Override
+	@Transactional(rollbackFor=DataCheckException.class)
+	public ObjectResult changePreOrderToOrder(int userId, int indentId) throws DataCheckException {
+		Indent indent = indentDA.getIndentById(indentId);
+		if (indent == null){
+			return new ObjectResult("cannot find indent by id "+indentId, false);
+		}
+		Member member = null;
+		if (indent.getMemberCard() != null && indent.getMemberCard().length() > 0){
+			member = memberDA.getMemberByCard(indent.getMemberCard());
+			if (member == null)
+				return new ObjectResult("cannot find member by card " + indent.getMemberCard(), false);
+		}
+		indent.setIndentType(ConstantValue.INDENT_TYPE_ORDER);
+		indentDA.save(indent);
+		
+		if (member != null){
+			double paidPrice = indent.getPaidPrice();
+			Date time = new Date();
+			boolean byScore = false;
+			boolean byDeposit = false;
+			double scorePerDollar = 0;
+			String branchName = "";
+			List<Configs> configs = configsDA.queryConfigs();
+			for(Configs config : configs){
+				if (ConstantValue.CONFIGS_MEMBERMGR_BYSCORE.equals(config.getName())){
+					byScore = Boolean.valueOf(config.getValue());
+				} else if (ConstantValue.CONFIGS_MEMBERMGR_SCOREPERDOLLAR.equals(config.getName())){
+					scorePerDollar = Double.parseDouble(config.getValue());
+				} else if (ConstantValue.CONFIGS_MEMBERMGR_BYDEPOSIT.equals(config.getName())){
+					byDeposit = Boolean.valueOf(config.getValue());
+				} else if (ConstantValue.CONFIGS_BRANCHNAME.equals(config.getName())){
+					branchName = config.getValue();
+				}
+			}
+			if (byScore && scorePerDollar > 0){
+				MemberScore ms = new MemberScore();
+				ms.setDate(time);
+				ms.setAmount(scorePerDollar * paidPrice);
+				ms.setPlace(branchName);
+				ms.setType(ConstantValue.INDENTTYPE_CONSUM);
+				ms.setMember(member);
+				memberScoreDA.save(ms);
+				member.setScore(member.getScore() + ms.getAmount());
+				member.setLastModifyTime(time);
+				memberDA.save(member);
+			}
+			if (byDeposit){
+				if (member.getBalanceMoney() < paidPrice){
+//					return new ObjectResult("Meber's balance is not enought to pay", false);
+					throw new DataCheckException("Meber's balance is not enought to pay");
+				}
+				MemberConsumption mc = new MemberConsumption();
+				mc.setAmount(paidPrice);
+				mc.setDate(time);
+				mc.setMember(member);
+				mc.setPlace(branchName);
+				mc.setType(ConstantValue.INDENTTYPE_CONSUM);
+				memberConsumptionDA.save(mc);
+				member.setBalanceMoney(member.getBalanceMoney() - paidPrice);
+				member.setLastModifyTime(time);
+				memberDA.save(member);
+			}
+		}
+		Hibernate.initialize(indent);
+		Hibernate.initialize(indent.getItems());
+		UserData selfUser = userDA.getUserById(userId);
+		logService.write(selfUser, LogData.LogType.INDENT_MAKE.toString(), "User " + selfUser + " make preorder to order : " + indent.getId());
+		return new ObjectResult(Result.OK, true, indent);
+	}
+	
+	@Override
+	@Transactional()
+	public ObjectResult deletePreOrder(int userId, int indentId) {
+		Indent indent = indentDA.getIndentById(indentId);
+		if (indent == null){
+			return new ObjectResult("cannot find indent by id "+indentId, false);
+		}
+		indentDA.delete(indent);
+		
+		UserData selfUser = userDA.getUserById(userId);
+		logService.write(selfUser, LogData.LogType.INDENT_MAKE.toString(), "User " + selfUser + " delete preorder : " + indent.getId());
+		return new ObjectResult(Result.OK, true, indent);
+	}
+	
 	@Override
 	public ObjectResult printIndent(int userId, int indentId) {
 		// TODO Auto-generated method stub
@@ -288,11 +407,11 @@ public class IndentService implements IIndentService {
 			List<Configs> configs = configsDA.queryConfigs();
 			for(Configs config : configs){
 				if (ConstantValue.CONFIGS_MEMBERMGR_BYSCORE.equals(config.getName())){
-					byScore = Boolean.getBoolean(config.getValue());
+					byScore = Boolean.valueOf(config.getValue());
 				} else if (ConstantValue.CONFIGS_MEMBERMGR_SCOREPERDOLLAR.equals(config.getName())){
 					scorePerDollar = Double.parseDouble(config.getValue());
 				} else if (ConstantValue.CONFIGS_MEMBERMGR_BYDEPOSIT.equals(config.getName())){
-					byDeposit = Boolean.getBoolean(config.getValue());
+					byDeposit = Boolean.valueOf(config.getValue());
 				} else if (ConstantValue.CONFIGS_BRANCHNAME.equals(config.getName())){
 					branchName = config.getValue();
 				}
@@ -324,17 +443,60 @@ public class IndentService implements IIndentService {
 		}
 		
 		UserData selfUser = userDA.getUserById(userId);
-		logService.write(selfUser, LogData.LogType.INDENT_MAKE.toString(), "User " + selfUser + " make order : " + indent.getId());
+		logService.write(selfUser, LogData.LogType.INDENT_MAKE.toString(), "User " + selfUser + " make refund order : " + indent.getId());
 		
 		return new ObjectResult(Result.OK, true, null);
 	}
 
 	@Override
 	@Transactional
-	public ObjectResult prebuyIndent(int userId, JSONArray jsonOrder, String payway, double paidPrice,
+	public ObjectResult prebuyIndent(int userId, JSONArray jsonOrder, String payWay, double paidPrice,
 			String memberCard, boolean paid) {
-		// TODO Auto-generated method stub
-		return null;
+		Member member = null;
+		if (memberCard != null && memberCard.length() > 0){
+			member = memberDA.getMemberByCard(memberCard);
+			if (member == null){
+				return new ObjectResult("cannot find member by card " + memberCard, false);
+			}
+		}
+		double totalprice = 0;
+		Indent indent = new Indent();
+		indent.setCreateTime(Calendar.getInstance().getTime());
+		for(int i = 0; i< jsonOrder.length(); i++){
+			JSONObject o = (JSONObject) jsonOrder.get(i);
+			int goodsid = o.getInt("id");
+			int amount = o.getInt("amount");
+			Goods goods = goodsDA.getGoodsById(goodsid);
+			if (goods == null){
+				return new ObjectResult("cannot find goods by id "+ goodsid, false);
+			}
+			IndentDetail detail = new IndentDetail();
+			detail.setIndent(indent);
+			detail.setGoodsId(goodsid);
+			detail.setAmount(amount);
+			detail.setGoodsName(goods.getName());
+			detail.setGoodsPrice(goods.getSellPrice());
+			indent.addItem(detail);
+			totalprice += goods.getSellPrice() * amount; 
+			goods.setLeftAmount(goods.getLeftAmount() - amount);
+			goodsDA.save(goods);
+		}
+		indent.setTotalPrice(totalprice);
+		indent.setPaidPrice(paidPrice);
+		indent.setMemberCard(memberCard);
+		indent.setPayWay(payWay);
+		if (paid)
+			indent.setIndentType(ConstantValue.INDENT_TYPE_PREBUY_PAID);
+		else 
+			indent.setIndentType(ConstantValue.INDENT_TYPE_PREBUY_UNPAID);
+		indentDA.save(indent);
+		
+		
+		UserData selfUser = userDA.getUserById(userId);
+		logService.write(selfUser, LogData.LogType.INDENT_MAKE.toString(), "User " + selfUser + " make preorder : " + indent.getId());
+		
+		return new ObjectResult(Result.OK, true, null);
+		
 	}
 	
 }

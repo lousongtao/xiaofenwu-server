@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.shuishou.retailer.BaseController;
 import com.shuishou.retailer.ConstantValue;
+import com.shuishou.retailer.DataCheckException;
 import com.shuishou.retailer.account.services.IAccountService;
 import com.shuishou.retailer.account.services.IPermissionService;
 import com.shuishou.retailer.indent.services.IIndentService;
@@ -40,8 +41,12 @@ public class IndentController extends BaseController {
 			@RequestParam(value="paidPrice", required = true) double paidPrice,
 			@RequestParam(value="member", required = false, defaultValue = "") String member) throws Exception{
 		JSONArray jsonOrder = new JSONArray(indents);
-		
-		return indentService.saveIndent(userId, jsonOrder, payWay, paidPrice, member);
+		try{
+			ObjectResult result = indentService.saveIndent(userId, jsonOrder, payWay, paidPrice, member);
+			return result;
+		}catch(DataCheckException ex){
+			return new ObjectResult(ex.getMessage(), false);
+		}
 	}
 	
 	@RequestMapping(value="/indent/refundindent", method = (RequestMethod.POST))
@@ -99,6 +104,48 @@ public class IndentController extends BaseController {
 		return indentService.queryIndent(start, limit, starttime, endtime, payway, member,orderby,orderbydesc);
 	}
 	
+	@RequestMapping(value="/indent/queryprebuyindent", method = {RequestMethod.GET,RequestMethod.POST})
+	public @ResponseBody ObjectListResult queryPrebuyIndent(
+			@RequestParam(value = "page", required = false, defaultValue = "0") String pageStr,
+			@RequestParam(value = "start", required = false, defaultValue = "0") String startStr,
+			@RequestParam(value = "limit", required = false, defaultValue = "300") String limitStr,
+			@RequestParam(value="starttime", required = false) String starttime,
+			@RequestParam(value="endtime", required = false) String endtime,
+			@RequestParam(value="member", required = false) String member) throws Exception{
+		
+		int page = Integer.parseInt(pageStr);
+		int start = Integer.parseInt(startStr);
+		int limit = Integer.parseInt(limitStr);
+		return indentService.queryPrebuyIndent(start, limit, starttime, endtime, member);
+	}
+	
+	@RequestMapping(value="/indent/changepreordertoorder", method = (RequestMethod.POST))
+	public @ResponseBody ObjectResult changePreOrderToOrder(
+			@RequestParam(value = "userId", required = true) int userId,
+			@RequestParam(value="indentId", required = true) int indentId) throws Exception{
+		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_UPDATE_ORDER)){
+			return new ObjectResult("no_permission", false);
+		}
+		try{
+			ObjectResult result = indentService.changePreOrderToOrder(userId, indentId);
+			return result;
+		} catch(DataCheckException ex){
+			return new ObjectResult(ex.getMessage(), false);
+		}
+					
+	}
+	
+	@RequestMapping(value="/indent/deletepreorder", method = (RequestMethod.POST))
+	public @ResponseBody ObjectResult deletePreOrder(
+			@RequestParam(value = "userId", required = true) int userId,
+			@RequestParam(value="indentId", required = true) int indentId) throws Exception{
+		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_UPDATE_ORDER)){
+			return new ObjectResult("no_permission", false);
+		}
+		ObjectResult result = indentService.deletePreOrder(userId, indentId);
+		return result;
+					
+	}
 	
 	@RequestMapping(value="/indent/printindent", method = (RequestMethod.POST))
 	public @ResponseBody ObjectResult printIndent(

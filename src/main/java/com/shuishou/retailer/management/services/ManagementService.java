@@ -105,9 +105,6 @@ public class ManagementService implements IManagementService{
 		result.data.currentDutyId = (int)user.getId();
 		result.data.currentDutyName = user.getUsername();
 		result.data.startTime = ConstantValue.DFYMDHMS.format(sw.getStartTime());
-		if (printLastDutyTicket){
-			String tempfilePath = request.getSession().getServletContext().getRealPath("/") + ConstantValue.CATEGORY_PRINTTEMPLATE;
-		}
 			
 		return result;
 	}
@@ -127,9 +124,6 @@ public class ManagementService implements IManagementService{
 		shiftWorkDA.save(sw);
 		logService.write(user, LogData.LogType.SHIFTWORK.toString(),
 				"User " + user.getUsername() + " end work.");
-		if (printShiftTicket){
-			String tempfilePath = request.getSession().getServletContext().getRealPath("/") + ConstantValue.CATEGORY_PRINTTEMPLATE;
-		}
 		
 		return new CurrentDutyResult(Result.OK, true);
 	}
@@ -145,7 +139,6 @@ public class ManagementService implements IManagementService{
 		if (sw == null){
 			return new ObjectResult("cannot find shift work record by id "+ shiftWorkId, false);
 		}
-		String tempfilePath = request.getSession().getServletContext().getRealPath("/") + ConstantValue.CATEGORY_PRINTTEMPLATE;
 		return new ObjectResult(Result.OK, true);
 	}
 }

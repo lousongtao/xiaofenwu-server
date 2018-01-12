@@ -127,7 +127,8 @@ public class GoodsController extends BaseController {
 			@RequestParam(value="userId", required = true) int userId, 
 			@RequestParam(value = "name", required = true) String name, 
 			@RequestParam(value = "barcode", required = true) String barcode,
-			@RequestParam(value = "buyPrice", required = true) double buyPrice, 
+			@RequestParam(value = "buyPrice", required = true) double buyPrice,
+			@RequestParam(value = "tradePrice", required = true) double tradePrice, 
 			@RequestParam(value = "sellPrice", required = true) double sellPrice, 
 			@RequestParam(value = "memberPrice", required = true) double memberPrice, 
 			@RequestParam(value = "leftAmount", required = false, defaultValue = "0") int leftAmount, 
@@ -136,7 +137,7 @@ public class GoodsController extends BaseController {
 		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_UPDATE_GOODS)){
 			return new Result("no_permission");
 		}
-		return goodsService.addGoods(userId, name, barcode, sellPrice, buyPrice, memberPrice, leftAmount, category2Id, description);
+		return goodsService.addGoods(userId, name, barcode, sellPrice, buyPrice, tradePrice, memberPrice, leftAmount, category2Id, description);
 	}
 	
 	@RequestMapping(value="/goods/update_goods", method = {RequestMethod.POST})
@@ -145,7 +146,8 @@ public class GoodsController extends BaseController {
 			@RequestParam(value="id", required = true) int id,
 			@RequestParam(value = "name", required = true) String name, 
 			@RequestParam(value = "barcode", required = true) String barcode,
-			@RequestParam(value = "buyPrice", required = true) double buyPrice, 
+			@RequestParam(value = "buyPrice", required = true) double buyPrice,
+			@RequestParam(value = "tradePrice", required = true) double tradePrice, 
 			@RequestParam(value = "sellPrice", required = true) double sellPrice, 
 			@RequestParam(value = "memberPrice", required = true) double memberPrice, 
 			@RequestParam(value = "description", required = false, defaultValue = "") String description,
@@ -153,7 +155,7 @@ public class GoodsController extends BaseController {
 		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_UPDATE_GOODS)){
 			return new Result("no_permission");
 		}
-		return goodsService.updateGoods(userId, id, name, barcode, sellPrice, buyPrice, memberPrice, category2Id, description);
+		return goodsService.updateGoods(userId, id, name, barcode, sellPrice, buyPrice, tradePrice, memberPrice, category2Id, description);
 	}
 	
 	@RequestMapping(value="/goods/import_goods", method = {RequestMethod.POST})

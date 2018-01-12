@@ -12,6 +12,8 @@ public class ConstantValue {
 	public static final DateFormat DFYMD = new SimpleDateFormat("yyyy/MM/dd");
 	public static final DateFormat DFWEEK = new SimpleDateFormat("EEE");
 	
+	public static final String FORMAT_DOUBLE = "%.2f";
+	
 	public static final String PERMISSION_QUERY_USER = "QUERY_USER";
 	public static final String PERMISSION_CREATE_USER = "CREATE_USER";
 	public static final String PERMISSION_UPDATE_GOODS = "UPDATE_GOODS";
@@ -49,7 +51,8 @@ public class ConstantValue {
 	
 	public static final byte INDENT_TYPE_ORDER = 1;//普通订单
 	public static final byte INDENT_TYPE_REFUND = 2;//退货单
-	public static final byte INDENT_TYPE_PREBUY = 3;//预购单
+	public static final byte INDENT_TYPE_PREBUY_PAID = 3;//预购单已付款
+	public static final byte INDENT_TYPE_PREBUY_UNPAID = 4;//预购单未付款
 	
 	//付款方式
 	public static final String INDENT_PAYWAY_CASH = "cash";//现金

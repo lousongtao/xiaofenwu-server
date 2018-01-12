@@ -22,6 +22,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
@@ -33,12 +34,16 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 
-public class MainFrame extends JFrame {
+import com.shuishou.retailer.ConstantValue;
+
+public class MainFrameImportMember extends JFrame {
 
 	private JTextField tfFileName = new JTextField();
 	private JFileChooser fc = new JFileChooser();
@@ -47,7 +52,7 @@ public class MainFrame extends JFrame {
 	private JLabel lbStatus = new JLabel();
 	
 	private List<String> sqls = new ArrayList<String>();
-	public MainFrame(){
+	public MainFrameImportMember(){
 		initUI();
 		
 	}
@@ -65,6 +70,7 @@ public class MainFrame extends JFrame {
 			conn = DriverManager.getConnection(ps.getProperty("db"), ps.getProperty("username"), ps.getProperty("password"));
 			stmt = conn.createStatement();
 			for (int i = 0; i < sqls.size(); i++) {
+				System.out.println(sqls.get(i));
 				stmt.execute(sqls.get(i));
 				lbStatus.setText("execute " + (i+1) + "/" + sqls.size() +" sentences...");
 			}
@@ -106,10 +112,9 @@ public class MainFrame extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				fc.setMultiSelectionEnabled(false);
-//				fc.setFileFilter(new ImportFileFilter("csv"));
-//				fc.setFileFilter(new ImportFileFilter("xls"));
+				fc.setFileFilter(new ImportFileFilter("xls"));
 				fc.setFileFilter(new ImportFileFilter("xlsx"));
-				fc.showDialog(MainFrame.this, "Choose");
+				fc.showDialog(MainFrameImportMember.this, "Choose");
 				File file = fc.getSelectedFile();
 				if (file != null)
 					tfFileName.setText(file.getAbsolutePath());
@@ -141,61 +146,57 @@ public class MainFrame extends JFrame {
 	private void readFileBuildSQL() throws Exception{
 		if (fc.getSelectedFile() == null)
 			return;
+		String now = ConstantValue.DFYMDHMS.format(new Date());
 		sqls.clear();
-		sqls.add("delete from dish;");
-		sqls.add("delete from category2;");
-		sqls.add("delete from category1;");
+		sqls.add("delete from member_consumption;");
+		sqls.add("delete from member_score;");
+		sqls.add("delete from member;");
+		Workbook wb = null;
 		try {
-			Workbook wb = WorkbookFactory.create(fc.getSelectedFile());
-			XSSFSheet sheetC1 = (XSSFSheet) wb.getSheetAt(0);
+			StringBuffer sbSql = new StringBuffer();
+			wb = WorkbookFactory.create(fc.getSelectedFile());
+			HSSFSheet sheetC1 = (HSSFSheet) wb.getSheetAt(0);
 			for (int i = 1; i < sheetC1.getPhysicalNumberOfRows(); i++) {
-				XSSFRow row = sheetC1.getRow(i);
-				String sql = "insert into category1(id, first_language_name, second_language_name, sequence) values (";
-				sql += (int)row.getCell(0).getNumericCellValue() + ",";
-				sql += "'" + row.getCell(1).getStringCellValue() + "',";
-				sql += "'" + row.getCell(2).getStringCellValue() + "',";
-				sql += (int)row.getCell(3).getNumericCellValue() +");";
-				sqls.add(sql);
+				HSSFRow row = sheetC1.getRow(i);
+				sbSql.delete(0, sbSql.length());
+				sbSql.append("insert into member(id, createTime, discountRate, lastModifyTime, memberCard, name, score, telephone) values (");
+				sbSql.append(i + ",");//id
+				sbSql.append("'" + transcateSpecialChar(row.getCell(7).getStringCellValue()) + "',");//create time
+				sbSql.append((Double.parseDouble(row.getCell(3).getStringCellValue()) / 100) + ",");//discountRate
+				sbSql.append("'" + now +"',");//lastModifyTime
+				sbSql.append("'"+row.getCell(0).getStringCellValue() +"',");//memberCard
+				sbSql.append("'" + transcateSpecialChar(row.getCell(1).getStringCellValue()) +"',");//name
+				sbSql.append(Double.parseDouble(row.getCell(2).getStringCellValue()) +",");//score
+				sbSql.append("'" + row.getCell(5).getStringCellValue() +"');");//telephone
+				sqls.add(sbSql.toString());
 			}
-			XSSFSheet sheetC2 = (XSSFSheet) wb.getSheetAt(1);
-			for (int i = 1; i < sheetC2.getPhysicalNumberOfRows(); i++) {
-				XSSFRow row = sheetC2.getRow(i);
-				String sql = "insert into category2(id, first_language_name, second_language_name, sequence, category1_id) values (";
-				sql += (int)row.getCell(0).getNumericCellValue() + ",";
-				sql += "'" + row.getCell(1).getStringCellValue() + "',";
-				sql += "'" + row.getCell(2).getStringCellValue() + "',";
-				sql += (int)row.getCell(3).getNumericCellValue() +",";
-				sql += (int)row.getCell(4).getNumericCellValue() +");";
-				sqls.add(sql);
-			}
-			XSSFSheet sheetDish = (XSSFSheet) wb.getSheetAt(2);
-			for (int i = 1; i < sheetDish.getPhysicalNumberOfRows(); i++) {
-				XSSFRow row = sheetDish.getRow(i);
-				String sql = "insert into dish(id, first_language_name, second_language_name, sequence, category2_id, price, isNew, isSpecial, hotLevel, isSoldOut) values (";
-				sql += (int)row.getCell(0).getNumericCellValue() + ",";
-				sql += "'" + row.getCell(1).getStringCellValue() + "',";
-				sql += "'" + row.getCell(2).getStringCellValue() + "',";
-				sql += (int)row.getCell(3).getNumericCellValue() +",";
-				sql += (int)row.getCell(4).getNumericCellValue() +",";
-				sql += row.getCell(5).getNumericCellValue() +",";
-				sql += (int)row.getCell(6).getNumericCellValue() +",";
-				sql += (int)row.getCell(7).getNumericCellValue() +",";
-				sql += (int)row.getCell(8).getNumericCellValue() +",";
-				sql += "0);";
-				sqls.add(sql);
-			}
+			
 			sqls.add("commit");
 		} catch (Exception e) {
 			throw e;
-		} 
+		} finally{
+			if (wb != null)
+				wb.close();
+		}
 	}
 	
+	private String transcateSpecialChar(String s){
+		String news = s;
+		if (s.indexOf("'") >= 0){
+			news = news.replaceAll("'", "''");
+		}
+		if (s.indexOf("\"") >= 0){
+			news = news.replaceAll("\"", "\\\"");
+		}
+		return news;
+	}				
+	
 	public static void main(String[] args){
-		MainFrame f = new MainFrame();
+		MainFrameImportMember f = new MainFrameImportMember();
 		f.setSize(new Dimension(300, 300));
 		f.setResizable(false);
 		f.setLocation(500, 500);
-		f.setTitle("Import Menu Tool");
+		f.setTitle("Import Member Tool");
 		f.addWindowListener(new WindowAdapter(){
 			public void windowClosing(WindowEvent e) {
 				System.exit(0);

@@ -282,9 +282,8 @@ public class DriverPos {
 		try {
 			
 			int len = str.getBytes(encoding).length;
-			logger.debug("str = " + str + ", length = " + length + ", len = " + len);
 			if (len > length) {
-				return str.substring(0, length);
+				return str.substring(0, length > str.length() ? str.length() : length);
 			}
 			for (int i = 0; i < length - len; i++) {
 				str += " ";

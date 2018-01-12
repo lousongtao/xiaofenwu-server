@@ -12,7 +12,7 @@ public interface IGoodsService {
 
 	public ObjectResult addCategory1(int userId, String name, int sequence);
 	public ObjectResult addCategory2(int userId, String name, int sequence, int category1Id);
-	public ObjectResult addGoods(int userId, String name, String barcode, double sellPrice, double buyPrice, double memeberPrice, 
+	public ObjectResult addGoods(int userId, String name, String barcode, double sellPrice, double buyPrice, double tradePrice, double memeberPrice, 
 			int leftAmount, int category2Id, String description);
 	public ObjectResult importGoods(int userId, int goodsId, int importAmount);
 	public ObjectResult changeGoodsAmount(int userId, int goodsId, int newAmount);
@@ -20,7 +20,7 @@ public interface IGoodsService {
 	
 	public ObjectResult updateCategory1(int userId, int id, String name, int sequence);
 	public ObjectResult updateCategory2(int userId, int id, String name, int sequence, int category1Id);
-	public ObjectResult updateGoods(int userId, int goodsId, String name, String barcode, double sellPrice, double buyPrice, 
+	public ObjectResult updateGoods(int userId, int goodsId, String name, String barcode, double sellPrice, double buyPrice, double tradePrice,
 			double memeberPrice, int category2Id, String description);
 	
 	public Result deleteCategory1(int userId, int category1Id);

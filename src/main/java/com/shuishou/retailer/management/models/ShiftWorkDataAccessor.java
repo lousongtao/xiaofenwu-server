@@ -34,7 +34,7 @@ public class ShiftWorkDataAccessor extends BaseDataAccessor implements IShiftWor
 	public List<ShiftWork> queryShiftWork(int start, int limit, String shiftName, Date startTime, Date endTime) {
 		Criteria c = sessionFactory.getCurrentSession().createCriteria(ShiftWork.class);
 		if (shiftName != null){
-			c.add(Restrictions.ilike("userName", shiftName));
+			c.add(Restrictions.ilike("userName", "%"+shiftName+"%"));
 		}
 		if (startTime != null){
 			c.add(Restrictions.ge("endTime", startTime));

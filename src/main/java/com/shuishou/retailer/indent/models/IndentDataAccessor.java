@@ -52,14 +52,14 @@ public class IndentDataAccessor extends BaseDataAccessor implements IIndentDataA
 	public List<Indent> getIndents(int start, int limit, Date starttime, Date endtime, String payway, String member, List<String> orderBys, List<String> orderByDescs) {
 		Criteria c = sessionFactory.getCurrentSession().createCriteria(Indent.class);
 		if (starttime != null)
-			c.add(Restrictions.ge("startTime", starttime));
+			c.add(Restrictions.ge("createTime", starttime));
 		if (endtime != null)
-			c.add(Restrictions.le("startTime", endtime));
+			c.add(Restrictions.le("createTime", endtime));
 		if (payway != null && payway.length() > 0){
-			c.add(Restrictions.ilike("payway", payway));
+			c.add(Restrictions.ilike("payway", "%" + payway + "%"));
 		}
 		if (member != null && member.length() > 0){
-			c.add(Restrictions.ilike("member", member));
+			c.add(Restrictions.ilike("memberCard", "%"+member+"%"));
 		}
 		if (orderBys != null && !orderBys.isEmpty()){
 			for (int i = 0; i < orderBys.size(); i++) {
@@ -81,16 +81,16 @@ public class IndentDataAccessor extends BaseDataAccessor implements IIndentDataA
 		String countStmt = "select count(l) from Indent l";
 		List<String> condList = Lists.newArrayList();
 		if (starttime != null){
-			condList.add("l.startTime >= :starttime");
+			condList.add("l.createTime >= :starttime");
 		}
 		if (endtime != null){
-			condList.add("l.startTime <= :endtime");
+			condList.add("l.createTime <= :endtime");
 		}
 		if (payway != null && payway.length() > 0){
 			condList.add("l.payway = :payway");
 		}
 		if (member != null && member.length() > 0){
-			condList.add("l.member = :member");
+			condList.add("l.memberCard = :member");
 		}
 		for (int i = 0; i < condList.size(); i++) {
 			countStmt += (i == 0 ? " where " : " and ") + condList.get(i);
@@ -132,9 +132,25 @@ public class IndentDataAccessor extends BaseDataAccessor implements IIndentDataA
 	public List<Indent> getIndentsByPaidTime(Date starttime, Date endtime) {
 		Criteria c = sessionFactory.getCurrentSession().createCriteria(Indent.class);
 		c.add(Restrictions.eq("status", ConstantValue.INDENT_STATUS_PAID));
-		c.add(Restrictions.ge("endTime", starttime));
-		c.add(Restrictions.le("endTime", endtime));
+		c.add(Restrictions.ge("createTime", starttime));
+		c.add(Restrictions.le("createTime", endtime));
 		return (List<Indent>)c.list();
 	}
 
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<Indent> getPrebuyIndents(int start, int limit, Date starttime, Date endtime, String member) {
+		Criteria c = sessionFactory.getCurrentSession().createCriteria(Indent.class);
+		if (starttime != null)
+			c.add(Restrictions.ge("createTime", starttime));
+		if (endtime != null)
+			c.add(Restrictions.le("createTime", endtime));
+		if (member != null && member.length() > 0){
+			c.add(Restrictions.ilike("memberCard", "%" + member +"%"));
+		}
+		c.setFirstResult(start);
+		c.setMaxResults(limit);
+		c.add(Restrictions.in("indentType", new Integer[]{(int)ConstantValue.INDENT_TYPE_PREBUY_PAID, (int)ConstantValue.INDENT_TYPE_PREBUY_UNPAID}));
+		return (List<Indent>)c.list();
+	}
 }
