@@ -19,15 +19,11 @@ public interface IIndentDataAccessor {
 	
 	public List<Indent> getAllIndent();
 	
-	public List<Indent> getUnpaidIndent();
-	
-	public List<Indent> getUnpaidIndent(String deskName);
-	
 	public List<Indent> getIndents(int start, int limit, Date starttime, Date endtime, String payway, String member, List<String> orderbys, List<String> orderByDescs);
 	
 	public List<Indent> getPrebuyIndents(int start, int limit, Date starttime, Date endtime, String member);
 	
-	public List<Indent> getIndentsByPaidTime(Date starttime, Date endtime);
+	public List<Indent> getIndentsByTime(Date starttime, Date endtime);
 	
 	public int getIndentCount(Date starttime, Date endtime, String payway, String member);
 	

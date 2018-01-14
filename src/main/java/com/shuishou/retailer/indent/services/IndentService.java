@@ -40,6 +40,7 @@ import com.shuishou.retailer.indent.models.IIndentDataAccessor;
 import com.shuishou.retailer.indent.models.IIndentDetailDataAccessor;
 import com.shuishou.retailer.indent.models.Indent;
 import com.shuishou.retailer.indent.models.IndentDetail;
+import com.shuishou.retailer.indent.view.GoodsSellRecord;
 import com.shuishou.retailer.log.models.LogData;
 import com.shuishou.retailer.log.services.ILogService;
 import com.shuishou.retailer.member.models.IMemberConsumptionDataAccessor;
@@ -105,6 +106,7 @@ public class IndentService implements IIndentService {
 			JSONObject o = (JSONObject) jsonOrder.get(i);
 			int goodsid = o.getInt("id");
 			int amount = o.getInt("amount");
+			double soldPrice = o.getDouble("soldPrice");
 			Goods goods = goodsDA.getGoodsById(goodsid);
 			if (goods == null){
 //				return new ObjectResult("cannot find goods by id "+ goodsid, false);
@@ -116,6 +118,7 @@ public class IndentService implements IIndentService {
 			detail.setAmount(amount);
 			detail.setGoodsName(goods.getName());
 			detail.setGoodsPrice(goods.getSellPrice());
+			detail.setSoldPrice(soldPrice);
 			indent.addItem(detail);
 			totalprice += goods.getSellPrice() * amount; 
 			goods.setLeftAmount(goods.getLeftAmount() - amount);
@@ -150,7 +153,7 @@ public class IndentService implements IIndentService {
 				ms.setDate(time);
 				ms.setAmount(scorePerDollar * paidPrice);
 				ms.setPlace(branchName);
-				ms.setType(ConstantValue.INDENTTYPE_CONSUM);
+				ms.setType(ConstantValue.MEMBERSCORE_CONSUM);
 				ms.setMember(member);
 				memberScoreDA.save(ms);
 				member.setScore(member.getScore() + ms.getAmount());
@@ -167,7 +170,7 @@ public class IndentService implements IIndentService {
 				mc.setDate(time);
 				mc.setMember(member);
 				mc.setPlace(branchName);
-				mc.setType(ConstantValue.INDENTTYPE_CONSUM);
+				mc.setType(ConstantValue.MEMBERDEPOSIT_CONSUM);
 				memberConsumptionDA.save(mc);
 				member.setBalanceMoney(member.getBalanceMoney() - paidPrice);
 				member.setLastModifyTime(time);
@@ -308,7 +311,7 @@ public class IndentService implements IIndentService {
 				ms.setDate(time);
 				ms.setAmount(scorePerDollar * paidPrice);
 				ms.setPlace(branchName);
-				ms.setType(ConstantValue.INDENTTYPE_CONSUM);
+				ms.setType(ConstantValue.MEMBERSCORE_CONSUM);
 				ms.setMember(member);
 				memberScoreDA.save(ms);
 				member.setScore(member.getScore() + ms.getAmount());
@@ -325,7 +328,7 @@ public class IndentService implements IIndentService {
 				mc.setDate(time);
 				mc.setMember(member);
 				mc.setPlace(branchName);
-				mc.setType(ConstantValue.INDENTTYPE_CONSUM);
+				mc.setType(ConstantValue.MEMBERDEPOSIT_CONSUM);
 				memberConsumptionDA.save(mc);
 				member.setBalanceMoney(member.getBalanceMoney() - paidPrice);
 				member.setLastModifyTime(time);
@@ -376,6 +379,7 @@ public class IndentService implements IIndentService {
 			JSONObject o = (JSONObject) jsonOrder.get(i);
 			int goodsid = o.getInt("id");
 			int amount = o.getInt("amount");
+			double soldPrice = o.getDouble("soldPrice");
 			Goods goods = goodsDA.getGoodsById(goodsid);
 			if (goods == null){
 				return new ObjectResult("cannot find goods by id "+ goodsid, false);
@@ -386,6 +390,7 @@ public class IndentService implements IIndentService {
 			detail.setAmount(amount);
 			detail.setGoodsName(goods.getName());
 			detail.setGoodsPrice(goods.getSellPrice());
+			detail.setSoldPrice(soldPrice);
 			indent.addItem(detail);
 			totalprice += goods.getSellPrice() * amount;
 			if (returnToStorage){
@@ -421,7 +426,7 @@ public class IndentService implements IIndentService {
 				ms.setDate(time);
 				ms.setAmount(scorePerDollar * refundPrice * (-1));
 				ms.setPlace(branchName);
-				ms.setType(ConstantValue.INDENTTYPE_CONSUM);
+				ms.setType(ConstantValue.MEMBERSCORE_REFUND);
 				ms.setMember(member);
 				memberScoreDA.save(ms);
 				member.setScore(member.getScore() + ms.getAmount());
@@ -434,7 +439,7 @@ public class IndentService implements IIndentService {
 				mc.setDate(time);
 				mc.setMember(member);
 				mc.setPlace(branchName);
-				mc.setType(ConstantValue.INDENTTYPE_CONSUM);
+				mc.setType(ConstantValue.MEMBERDEPOSIT_REFUND);
 				memberConsumptionDA.save(mc);
 				member.setBalanceMoney(member.getBalanceMoney() + refundPrice);
 				member.setLastModifyTime(time);
@@ -466,6 +471,7 @@ public class IndentService implements IIndentService {
 			JSONObject o = (JSONObject) jsonOrder.get(i);
 			int goodsid = o.getInt("id");
 			int amount = o.getInt("amount");
+			double soldPrice = o.getDouble("soldPrice");
 			Goods goods = goodsDA.getGoodsById(goodsid);
 			if (goods == null){
 				return new ObjectResult("cannot find goods by id "+ goodsid, false);
@@ -476,6 +482,7 @@ public class IndentService implements IIndentService {
 			detail.setAmount(amount);
 			detail.setGoodsName(goods.getName());
 			detail.setGoodsPrice(goods.getSellPrice());
+			detail.setSoldPrice(soldPrice);
 			indent.addItem(detail);
 			totalprice += goods.getSellPrice() * amount; 
 			goods.setLeftAmount(goods.getLeftAmount() - amount);
@@ -499,4 +506,37 @@ public class IndentService implements IIndentService {
 		
 	}
 	
+	@Override
+	@Transactional
+	public ObjectListResult queryGoodsSoldRecord(int goodsId, String sStarttime, String sEndtime, String payway, String member){
+		Date starttime = null;
+		Date endtime = null;
+		if (sStarttime != null && sStarttime.length() > 0){
+			try {
+				starttime = ConstantValue.DFYMDHMS.parse(sStarttime);
+			} catch (ParseException e) {
+				e.printStackTrace();
+			}
+		}
+		if (sEndtime != null && sEndtime.length() > 0){
+			try {
+				endtime = ConstantValue.DFYMDHMS.parse(sEndtime);
+			} catch (ParseException e) {
+				e.printStackTrace();
+			}
+		}
+		List<IndentDetail> details = indentDetailDA.getIndentDetailByGoods(goodsId, starttime, endtime, payway, member);
+		ArrayList<GoodsSellRecord> records = new ArrayList<>();
+		for (int i = 0; i < details.size(); i++) {
+			IndentDetail detail = details.get(i);
+			GoodsSellRecord record = new GoodsSellRecord();
+			record.setAmount(detail.getAmount());
+			record.setMember(detail.getIndent().getMemberCard());
+			record.setPayWay(detail.getIndent().getPayWay());
+			record.setSoldPrice(detail.getSoldPrice());
+			record.setSoldTime(ConstantValue.DFYMDHMS.format(detail.getIndent().getCreateTime()));
+			records.add(record);
+		}
+		return new ObjectListResult(Result.OK, true, records);
+	}
 }

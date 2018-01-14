@@ -28,4 +28,9 @@ public interface IGoodsService {
 	public Result deleteGoods(int userId, int goodsId);
 	
 	public ObjectListResult queryAllGoods();
+	
+	public ObjectResult addPackageBind(int userId, int bigPackageId, int smallPackageId, int rate);
+	public ObjectResult updatePackageBind(int userId, int packageBindId, int bigPackageId, int smallPackageId, int rate);
+	public ObjectListResult queryPackageBind(int userId);
+	public Result deletePackageBind(int userId, int packageBindId);
 }

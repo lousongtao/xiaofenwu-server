@@ -36,6 +36,8 @@ import com.shuishou.retailer.goods.models.IAddGoodsRecordDataAccessor;
 import com.shuishou.retailer.goods.models.ICategory1DataAccessor;
 import com.shuishou.retailer.goods.models.ICategory2DataAccessor;
 import com.shuishou.retailer.goods.models.IGoodsDataAccessor;
+import com.shuishou.retailer.goods.models.IPackageBindDataAccessor;
+import com.shuishou.retailer.goods.models.PackageBind;
 import com.shuishou.retailer.views.ObjectListResult;
 import com.shuishou.retailer.views.ObjectResult;
 import com.shuishou.retailer.views.Result;
@@ -67,6 +69,10 @@ public class GoodsService implements IGoodsService {
 	
 	@Autowired
 	private IAddGoodsRecordDataAccessor addGoodsRecordDA;
+	
+	@Autowired
+	private IPackageBindDataAccessor packageBindDA;
+	
 	/**
 	 * @param userId, the operator Id
 	 */
@@ -117,7 +123,7 @@ public class GoodsService implements IGoodsService {
 	public ObjectResult deleteCategory1(int userId, int category1Id) {
 		Category1 c1 = category1DA.getCategory1ById(category1Id);
 		if (c1 == null)
-			return new ObjectResult("not found Category1 by id "+ category1Id, false);
+			return new ObjectResult("not find Category1 by id "+ category1Id, false);
 		if (c1.getCategory2s() != null && !c1.getCategory2s().isEmpty())
 			return new ObjectResult("this category is not empty", false);
 		category1DA.delete(c1);
@@ -134,7 +140,7 @@ public class GoodsService implements IGoodsService {
 	public ObjectResult deleteCategory2(int userId, int category2Id) {
 		Category2 c2 = category2DA.getCategory2ById(category2Id);
 		if (c2 == null)
-			return new ObjectResult("not found Category2 by id "+ category2Id, false);
+			return new ObjectResult("not find Category2 by id "+ category2Id, false);
 		//must delete first from C1's children, otherwise report hibernate exception:
 		//deleted object would be re-saved by cascade (remove deleted object from associations)
 		c2.getCategory1().getCategory2s().remove(c2);
@@ -152,7 +158,7 @@ public class GoodsService implements IGoodsService {
 	public ObjectResult updateCategory1(int userId, int id, String name, int sequence) {
 		Category1 c1 = category1DA.getCategory1ById(id);
 		if (c1 == null)
-			return new ObjectResult("not found Category1 by id "+ id, false, null);
+			return new ObjectResult("not find Category1 by id "+ id, false, null);
 		c1.setName(name);
 		c1.setSequence(sequence);
 		category1DA.save(c1);
@@ -170,10 +176,10 @@ public class GoodsService implements IGoodsService {
 	public ObjectResult updateCategory2(int userId, int id, String name, int sequence, int category1Id) {
 		Category1 c1 = category1DA.getCategory1ById(category1Id);
 		if (c1 == null)
-			return new ObjectResult("not found Category1 by id "+ category1Id, false, null);
+			return new ObjectResult("not find Category1 by id "+ category1Id, false, null);
 		Category2 c2 = category2DA.getCategory2ById(id);
 		if (c2 == null)
-			return new ObjectResult("not found Category2 by id "+ id, false, null);
+			return new ObjectResult("not find Category2 by id "+ id, false, null);
 		
 		c2.setName(name);
 		c2.setSequence(sequence);
@@ -322,7 +328,19 @@ public class GoodsService implements IGoodsService {
 	@Override
 	@Transactional
 	public Result deleteGoods(int userId, int goodsId){
-		return null;
+		Goods goods = goodsDA.getGoodsById(goodsId);
+		if (goods == null)
+			return new ObjectResult("not find Goods by id "+ goodsId, false);
+		//must delete first from C2's children, otherwise report hibernate exception:
+		//deleted object would be re-saved by cascade (remove deleted object from associations)
+		goods.getCategory2().getGoods().remove(goods);
+		goodsDA.delete(goods);
+		// write log.
+		UserData selfUser = userDA.getUserById(userId);
+		logService.write(selfUser, LogData.LogType.GOODS_CHANGE.toString(),
+				"User " + selfUser + " delete Goods " + goods.getName() + ".");
+
+		return new ObjectResult(Result.OK, true);		
 	}
 	
 	@Override
@@ -331,6 +349,76 @@ public class GoodsService implements IGoodsService {
 		List<Category1> c1s = category1DA.getAllCategory1();
 		hibernateInitialCategory1(c1s);
 		return new ObjectListResult(Result.OK, true, c1s);
+	}
+	
+	@Override
+	@Transactional
+	public ObjectResult addPackageBind(int userId, int bigPackageId, int smallPackageId, int rate) {
+		Goods big = goodsDA.getGoodsById(bigPackageId);
+		Goods small = goodsDA.getGoodsById(smallPackageId);
+		if (big == null)
+			return new ObjectResult("not find Goods by id "+ bigPackageId, false);
+		if (small == null)
+			return new ObjectResult("not find Goods by id "+ smallPackageId, false);
+		PackageBind pb = new PackageBind();
+		pb.setBigPackage(big);
+		pb.setSmallPackage(small);
+		pb.setRate(rate);
+		packageBindDA.save(pb);
+		Hibernate.initialize(big);
+		Hibernate.initialize(small);
+		
+		UserData selfUser = userDA.getUserById(userId);
+		logService.write(selfUser, LogData.LogType.PACKAGEBIND_CHANGE.toString(),
+				"User " + selfUser + " create PackageBind " + pb.toString() + ".");
+		return new ObjectResult(Result.OK, true, pb);
+	}
+
+	@Override
+	@Transactional
+	public ObjectResult updatePackageBind(int userId, int packageBindId, int bigPackageId, int smallPackageId,
+			int rate) {
+		PackageBind pb = packageBindDA.getPackageBindById(packageBindId);
+		if (pb == null)
+			return new ObjectResult("not find PackageBind by id "+ packageBindId, false);
+		Goods big = goodsDA.getGoodsById(bigPackageId);
+		Goods small = goodsDA.getGoodsById(smallPackageId);
+		if (big == null)
+			return new ObjectResult("not find Goods by id "+ bigPackageId, false);
+		if (small == null)
+			return new ObjectResult("not find Goods by id "+ smallPackageId, false);
+		pb.setBigPackage(big);
+		pb.setSmallPackage(small);
+		pb.setRate(rate);
+		packageBindDA.save(pb);
+		
+		Hibernate.initialize(big);
+		Hibernate.initialize(small);
+		
+		UserData selfUser = userDA.getUserById(userId);
+		logService.write(selfUser, LogData.LogType.PACKAGEBIND_CHANGE.toString(),
+				"User " + selfUser + " update PackageBind " + pb.toString() + ".");
+		return new ObjectResult(Result.OK, true, pb);
+	}
+
+	@Override
+	@Transactional
+	public ObjectListResult queryPackageBind(int userId) {
+		List<PackageBind> pbs = packageBindDA.getAllPackageBinds();
+		return new ObjectListResult(Result.OK, true, pbs);
+	}
+
+	@Override
+	@Transactional
+	public Result deletePackageBind(int userId, int packageBindId) {
+		PackageBind pb = packageBindDA.getPackageBindById(packageBindId);
+		if (pb == null)
+			return new ObjectResult("not find PackageBind by id "+ packageBindId, false);
+		packageBindDA.delete(pb);
+		UserData selfUser = userDA.getUserById(userId);
+		logService.write(selfUser, LogData.LogType.PACKAGEBIND_CHANGE.toString(),
+				"User " + selfUser + " delete PackageBind " + pb.toString() + ".");
+		return new ObjectResult(Result.OK, true, null);
 	}
 	
 	@Transactional
@@ -359,6 +447,8 @@ public class GoodsService implements IGoodsService {
 			}
 		}
 	}
+
+	
 
 	
 

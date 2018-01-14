@@ -32,15 +32,15 @@ public class MemberDataAccessor extends BaseDataAccessor implements IMemberDataA
 			String postCode, String telephone) {
 		Criteria c = sessionFactory.getCurrentSession().createCriteria(Member.class);
 		if (name != null && name.length() > 0)
-			c.add(Restrictions.like("name", name));
+			c.add(Restrictions.ilike("name", "%" + name + "%"));
 		if (memberCard != null && memberCard.length() > 0)
-			c.add(Restrictions.like("memberCard", memberCard));
+			c.add(Restrictions.ilike("memberCard", "%" + memberCard + "%"));
 		if (address != null && address.length() > 0)
-			c.add(Restrictions.like("address", address));
+			c.add(Restrictions.ilike("address", "%" + address + "%"));
 		if (postCode != null && postCode.length() > 0)
 			c.add(Restrictions.like("postCode", postCode));
 		if (telephone != null && telephone.length() > 0)
-			c.add(Restrictions.like("telephone", telephone));
+			c.add(Restrictions.ilike("telephone", "%" + telephone + "%"));
 		c.addOrder(Order.asc("id"));
 		return (List<Member>)c.list();
 	}

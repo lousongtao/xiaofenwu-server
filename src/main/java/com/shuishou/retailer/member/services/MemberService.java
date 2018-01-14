@@ -137,11 +137,11 @@ public class MemberService implements IMemberService{
 	@Override
 	@Transactional
 	public ObjectListResult queryMember(String name, String memberCard, String address, String postCode, String telephone) {
-		int count = memberDA.queryMemberCount(name, memberCard, address, postCode, telephone);
-		if (count >= 300)
-			return new ObjectListResult("Record is over 300, please change the filter", false, null, count);
+//		int count = memberDA.queryMemberCount(name, memberCard, address, postCode, telephone);
+//		if (count >= 300)
+//			return new ObjectListResult("Record is over 300, please change the filter", false, null, count);
 		List<Member> members = memberDA.queryMember(name, memberCard, address, postCode, telephone);
-		return new ObjectListResult(Result.OK, true, members, count);
+		return new ObjectListResult(Result.OK, true, members, 0);
 	}
 	
 	@Override

@@ -196,4 +196,53 @@ public class GoodsController extends BaseController {
 		ObjectListResult result = goodsService.queryAllGoods();
 		return result;
 	}
+	
+	@RequestMapping(value = "/goods/addpackagebind", method = {RequestMethod.POST})
+	public @ResponseBody Result addPackageBind(
+			@RequestParam(value = "userId", required = true) int userId,
+			@RequestParam(value = "bigPackageId", required = true) int bigPackageId,
+			@RequestParam(value = "smallPackageId", required = true) int smallPackageId,
+			@RequestParam(value = "rate", required = true) int rate) throws Exception{
+		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_UPDATE_PACKAGEBIND)){
+			return new Result("no_permission");
+		}
+		
+		Result result = goodsService.addPackageBind(userId, bigPackageId, smallPackageId, rate);
+		
+		return result;
+	}
+	
+	@RequestMapping(value = "/goods/updatepackagebind", method = {RequestMethod.POST})
+	public @ResponseBody Result updatePackageBind(
+			@RequestParam(value = "userId", required = true) int userId,
+			@RequestParam(value = "packageBindId", required = true) int packageBindId,
+			@RequestParam(value = "bigPackageId", required = true) int bigPackageId,
+			@RequestParam(value = "smallPackageId", required = true) int smallPackageId,
+			@RequestParam(value = "rate", required = true) int rate) throws Exception{
+		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_UPDATE_PACKAGEBIND)){
+			return new Result("no_permission");
+		}
+		
+		Result result = goodsService.updatePackageBind(userId, packageBindId, bigPackageId, smallPackageId, rate);
+		
+		return result;
+		
+	}
+	
+	@RequestMapping(value = "/goods/deletepackagebind", method = (RequestMethod.POST))
+	public @ResponseBody Result deletePackageBind(
+			@RequestParam(value="userId", required = true) int userId, 
+			@RequestParam(value = "packageBindId", required = true) int packageBindId) throws Exception{
+		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_UPDATE_PACKAGEBIND)){
+			return new Result("no_permission");
+		}
+		return goodsService.deletePackageBind(userId, packageBindId);
+	}
+	
+	@RequestMapping(value="/goods/querypackagebinds", method = {RequestMethod.GET})
+	public @ResponseBody ObjectListResult queryPackageBind(
+			@RequestParam(value = "userId", required = true) int userId) throws Exception{
+		ObjectListResult result = goodsService.queryPackageBind(userId);
+		return result;
+	}
 }

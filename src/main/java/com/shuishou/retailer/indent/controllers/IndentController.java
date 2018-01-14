@@ -119,6 +119,16 @@ public class IndentController extends BaseController {
 		return indentService.queryPrebuyIndent(start, limit, starttime, endtime, member);
 	}
 	
+	@RequestMapping(value="/indent/querygoodssoldrecord", method = {RequestMethod.GET,RequestMethod.POST})
+	public @ResponseBody ObjectListResult queryGoodsSoldRecord(
+			@RequestParam(value="goodsId", required = true) int goodsId,
+			@RequestParam(value="starttime", required = false) String starttime,
+			@RequestParam(value="endtime", required = false) String endtime,
+			@RequestParam(value="payway", required = false) String payway,
+			@RequestParam(value="member", required = false) String member) throws Exception{
+		return indentService.queryGoodsSoldRecord(goodsId, starttime, endtime, payway, member);
+	}
+	
 	@RequestMapping(value="/indent/changepreordertoorder", method = (RequestMethod.POST))
 	public @ResponseBody ObjectResult changePreOrderToOrder(
 			@RequestParam(value = "userId", required = true) int userId,

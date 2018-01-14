@@ -111,27 +111,15 @@ public class IndentDataAccessor extends BaseDataAccessor implements IIndentDataA
 		return (int)(long)query.uniqueResult();
 	}
 
-	@Override
-	public List<Indent> getUnpaidIndent() {
-		String hql = "from Indent where status = " + ConstantValue.INDENT_STATUS_OPEN;
-		return sessionFactory.getCurrentSession().createQuery(hql).list();
-	}
-	
-	@Override
-	public List<Indent> getUnpaidIndent(String deskName) {
-		String hql = "from Indent where status = " + ConstantValue.INDENT_STATUS_OPEN + " and deskName='"+deskName+"'";
-		return sessionFactory.getCurrentSession().createQuery(hql).list();
-	}
-
 	/**
 	 * query the indent records which are paid between the period
 	 * @param starttime cannot be null
 	 * @param endtime cannot be null
 	 */
 	@Override
-	public List<Indent> getIndentsByPaidTime(Date starttime, Date endtime) {
+	public List<Indent> getIndentsByTime(Date starttime, Date endtime) {
 		Criteria c = sessionFactory.getCurrentSession().createCriteria(Indent.class);
-		c.add(Restrictions.eq("status", ConstantValue.INDENT_STATUS_PAID));
+		c.add(Restrictions.eq("indentType", ConstantValue.INDENT_TYPE_ORDER));
 		c.add(Restrictions.ge("createTime", starttime));
 		c.add(Restrictions.le("createTime", endtime));
 		return (List<Indent>)c.list();

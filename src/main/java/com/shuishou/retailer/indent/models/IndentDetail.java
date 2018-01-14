@@ -35,6 +35,9 @@ public class IndentDetail {
 	@Column(nullable = false, name="goods_price", precision = 8, scale = 2)
 	private double goodsPrice;//单个goods价格, 不考虑amount
 	
+	@Column(nullable = false, name="sold_price")
+	private double soldPrice;//经过会员折扣后的价格, 不考虑到amount, 即单个商品的折扣后价格
+	
 	@Column(nullable = false, name="goods_name")
 	private String goodsName;
 	
@@ -77,6 +80,14 @@ public class IndentDetail {
 
 	public void setGoodsPrice(double goodsPrice) {
 		this.goodsPrice = goodsPrice;
+	}
+
+	public double getSoldPrice() {
+		return soldPrice;
+	}
+
+	public void setSoldPrice(double soldPrice) {
+		this.soldPrice = soldPrice;
 	}
 
 	public String getGoodsName() {

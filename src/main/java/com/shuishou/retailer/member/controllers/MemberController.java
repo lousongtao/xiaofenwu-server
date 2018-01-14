@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.shuishou.retailer.BaseController;
 import com.shuishou.retailer.ConstantValue;
 import com.shuishou.retailer.account.services.IPermissionService;
 import com.shuishou.retailer.member.services.IMemberService;
@@ -17,7 +18,7 @@ import com.shuishou.retailer.views.ObjectListResult;
 import com.shuishou.retailer.views.ObjectResult;
 
 @Controller
-public class MemberController {
+public class MemberController extends BaseController {
 	private Logger log = Logger.getLogger("MemberController");
 	
 	@Autowired
@@ -70,10 +71,16 @@ public class MemberController {
 		if (sBirth != null && sBirth.length() > 0){
 			birth = ConstantValue.DFYMD.parse(sBirth);
 		}
-		ObjectResult result = memberService.addMember(userId, name, memberCard, address, postCode, telephone, birth, discountRate);
+		try{
+			ObjectResult result = memberService.addMember(userId, name, memberCard, address, postCode, telephone, birth, discountRate);
 		
-		return result;
-		
+			return result;
+		} catch(Exception e){
+			log.error(ConstantValue.DFYMDHMS.format(new Date()));
+	        log.error("", e);
+	        e.printStackTrace();
+			return new ObjectResult(e.getMessage()+"\n"+e.getCause(), false);
+		}
 	}
 	
 	@RequestMapping(value = "/member/updatemember", method = {RequestMethod.POST})
@@ -94,10 +101,16 @@ public class MemberController {
 		if (sBirth != null && sBirth.length() > 0){
 			birth = ConstantValue.DFYMD.parse(sBirth);
 		}
-		ObjectResult result = memberService.updateMember(userId, id, name, memberCard, address, postCode, telephone, birth, discountRate);
+		try{
+			ObjectResult result = memberService.updateMember(userId, id, name, memberCard, address, postCode, telephone, birth, discountRate);
 		
-		return result;
-		
+			return result;
+		} catch(Exception e){
+			log.error(ConstantValue.DFYMDHMS.format(new Date()));
+	        log.error("", e);
+	        e.printStackTrace();
+			return new ObjectResult(e.getMessage()+"\n"+e.getCause(), false);
+		}
 	}
 	
 	@RequestMapping(value = "/member/updatememberscore", method = {RequestMethod.POST})
