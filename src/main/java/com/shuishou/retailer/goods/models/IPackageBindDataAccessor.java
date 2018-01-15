@@ -13,5 +13,7 @@ public interface IPackageBindDataAccessor {
 	
 	public PackageBind getPackageBindById(int id);
 	
+	public PackageBind getPackageBindBySmallGoodsId(int id);
+	
 	public List<PackageBind> getAllPackageBinds();
 }

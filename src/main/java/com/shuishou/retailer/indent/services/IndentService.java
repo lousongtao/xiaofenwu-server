@@ -36,6 +36,8 @@ import com.shuishou.retailer.common.models.Configs;
 import com.shuishou.retailer.common.models.IConfigsDataAccessor;
 import com.shuishou.retailer.goods.models.Goods;
 import com.shuishou.retailer.goods.models.IGoodsDataAccessor;
+import com.shuishou.retailer.goods.models.IPackageBindDataAccessor;
+import com.shuishou.retailer.goods.models.PackageBind;
 import com.shuishou.retailer.indent.models.IIndentDataAccessor;
 import com.shuishou.retailer.indent.models.IIndentDetailDataAccessor;
 import com.shuishou.retailer.indent.models.Indent;
@@ -86,6 +88,9 @@ public class IndentService implements IIndentService {
 	@Autowired
 	private IMemberConsumptionDataAccessor memberConsumptionDA;
 	
+	@Autowired
+	private IPackageBindDataAccessor packageBindDA;
+	
 	
 	private DecimalFormat doubleFormat = new DecimalFormat("0.00");
 	
@@ -121,8 +126,7 @@ public class IndentService implements IIndentService {
 			detail.setSoldPrice(soldPrice);
 			indent.addItem(detail);
 			totalprice += goods.getSellPrice() * amount; 
-			goods.setLeftAmount(goods.getLeftAmount() - amount);
-			goodsDA.save(goods);
+			changeGoodsLeftAmount(goods, amount);
 		}
 		indent.setTotalPrice(totalprice);
 		indent.setPaidPrice(paidPrice);
@@ -131,57 +135,43 @@ public class IndentService implements IIndentService {
 		indent.setIndentType(ConstantValue.INDENT_TYPE_ORDER);
 		indentDA.save(indent);
 		if (member != null){
-			Date time = new Date();
-			boolean byScore = false;
-			boolean byDeposit = false;
-			double scorePerDollar = 0;
-			String branchName = "";
-			List<Configs> configs = configsDA.queryConfigs();
-			for(Configs config : configs){
-				if (ConstantValue.CONFIGS_MEMBERMGR_BYSCORE.equals(config.getName())){
-					byScore = Boolean.valueOf(config.getValue());
-				} else if (ConstantValue.CONFIGS_MEMBERMGR_SCOREPERDOLLAR.equals(config.getName())){
-					scorePerDollar = Double.parseDouble(config.getValue());
-				} else if (ConstantValue.CONFIGS_MEMBERMGR_BYDEPOSIT.equals(config.getName())){
-					byDeposit = Boolean.valueOf(config.getValue());
-				} else if (ConstantValue.CONFIGS_BRANCHNAME.equals(config.getName())){
-					branchName = config.getValue();
-				}
-			}
-			if (byScore && scorePerDollar > 0){
-				MemberScore ms = new MemberScore();
-				ms.setDate(time);
-				ms.setAmount(scorePerDollar * paidPrice);
-				ms.setPlace(branchName);
-				ms.setType(ConstantValue.MEMBERSCORE_CONSUM);
-				ms.setMember(member);
-				memberScoreDA.save(ms);
-				member.setScore(member.getScore() + ms.getAmount());
-				member.setLastModifyTime(time);
-				memberDA.save(member);
-			}
-			if (byDeposit){
-				if (member.getBalanceMoney() < paidPrice){
-//					return new ObjectResult("Meber's balance is not enought to pay", false);
-					throw new DataCheckException("Meber's balance is not enought to pay");
-				}
-				MemberConsumption mc = new MemberConsumption();
-				mc.setAmount(paidPrice);
-				mc.setDate(time);
-				mc.setMember(member);
-				mc.setPlace(branchName);
-				mc.setType(ConstantValue.MEMBERDEPOSIT_CONSUM);
-				memberConsumptionDA.save(mc);
-				member.setBalanceMoney(member.getBalanceMoney() - paidPrice);
-				member.setLastModifyTime(time);
-				memberDA.save(member);
-			}
+			recordMemberScore(member, paidPrice);
+			recordMemberConsumption(member, paidPrice);
 		}
 		
 		UserData selfUser = userDA.getUserById(userId);
 		logService.write(selfUser, LogData.LogType.INDENT_MAKE.toString(), "User " + selfUser + " make order : " + indent.getId());
 		
 		return new ObjectResult(Result.OK, true, null);
+	}
+	
+	/**
+	 * 1. goods.leftamount >= amount: reduce the amount from the goods' leftamount;
+	 * 2. goods.leftamount < amount: look for if there is existing package bind, if yes, reduce from the big package; if no, reduce amount from the goods
+	 * @param goods
+	 * @param amount
+	 */
+	@Transactional
+	private void changeGoodsLeftAmount(Goods goods, int amount){
+		if (goods.getLeftAmount() >= amount){
+			goods.setLeftAmount(goods.getLeftAmount() - amount);
+			goodsDA.save(goods);
+		} else {
+			//check package bind, reduce from big package
+			PackageBind pb = packageBindDA.getPackageBindBySmallGoodsId(goods.getId());
+			if (pb == null){
+				goods.setLeftAmount(goods.getLeftAmount() - amount);
+				goodsDA.save(goods);
+			} else {
+				Goods bigPackage = pb.getBigPackage();
+				int bigAmount = (int)Math.ceil((double)amount / (double)pb.getRate());
+				int left = bigAmount * pb.getRate() - amount;
+				bigPackage.setLeftAmount(bigPackage.getLeftAmount() - bigAmount);
+				goods.setLeftAmount(goods.getLeftAmount() + left);
+				goodsDA.save(goods);
+				goodsDA.save(bigPackage);
+			}
+		}
 	}
 		
 	@Override
@@ -271,6 +261,9 @@ public class IndentService implements IIndentService {
 		return new ObjectListResult(Result.OK, true, (ArrayList<Indent>)indents, 0);
 	}
 
+	/**
+	 * 修改商品库存, 记录用户消费记录
+	 */
 	@Override
 	@Transactional(rollbackFor=DataCheckException.class)
 	public ObjectResult changePreOrderToOrder(int userId, int indentId) throws DataCheckException {
@@ -285,55 +278,21 @@ public class IndentService implements IIndentService {
 				return new ObjectResult("cannot find member by card " + indent.getMemberCard(), false);
 		}
 		indent.setIndentType(ConstantValue.INDENT_TYPE_ORDER);
+		indent.setCreateTime(new Date());
 		indentDA.save(indent);
-		
+		List<IndentDetail> details = indent.getItems();
+		for (int i = 0; i < details.size(); i++) {
+			IndentDetail detail = details.get(i);
+			Goods goods = goodsDA.getGoodsById(detail.getGoodsId());
+			if (goods == null){
+				throw new DataCheckException("cannot find goods by id "+ detail.getGoodsId());
+			}
+			changeGoodsLeftAmount(goods, detail.getAmount());
+		}
 		if (member != null){
 			double paidPrice = indent.getPaidPrice();
-			Date time = new Date();
-			boolean byScore = false;
-			boolean byDeposit = false;
-			double scorePerDollar = 0;
-			String branchName = "";
-			List<Configs> configs = configsDA.queryConfigs();
-			for(Configs config : configs){
-				if (ConstantValue.CONFIGS_MEMBERMGR_BYSCORE.equals(config.getName())){
-					byScore = Boolean.valueOf(config.getValue());
-				} else if (ConstantValue.CONFIGS_MEMBERMGR_SCOREPERDOLLAR.equals(config.getName())){
-					scorePerDollar = Double.parseDouble(config.getValue());
-				} else if (ConstantValue.CONFIGS_MEMBERMGR_BYDEPOSIT.equals(config.getName())){
-					byDeposit = Boolean.valueOf(config.getValue());
-				} else if (ConstantValue.CONFIGS_BRANCHNAME.equals(config.getName())){
-					branchName = config.getValue();
-				}
-			}
-			if (byScore && scorePerDollar > 0){
-				MemberScore ms = new MemberScore();
-				ms.setDate(time);
-				ms.setAmount(scorePerDollar * paidPrice);
-				ms.setPlace(branchName);
-				ms.setType(ConstantValue.MEMBERSCORE_CONSUM);
-				ms.setMember(member);
-				memberScoreDA.save(ms);
-				member.setScore(member.getScore() + ms.getAmount());
-				member.setLastModifyTime(time);
-				memberDA.save(member);
-			}
-			if (byDeposit){
-				if (member.getBalanceMoney() < paidPrice){
-//					return new ObjectResult("Meber's balance is not enought to pay", false);
-					throw new DataCheckException("Meber's balance is not enought to pay");
-				}
-				MemberConsumption mc = new MemberConsumption();
-				mc.setAmount(paidPrice);
-				mc.setDate(time);
-				mc.setMember(member);
-				mc.setPlace(branchName);
-				mc.setType(ConstantValue.MEMBERDEPOSIT_CONSUM);
-				memberConsumptionDA.save(mc);
-				member.setBalanceMoney(member.getBalanceMoney() - paidPrice);
-				member.setLastModifyTime(time);
-				memberDA.save(member);
-			}
+			recordMemberScore(member, paidPrice);
+			recordMemberConsumption(member, paidPrice);
 		}
 		Hibernate.initialize(indent);
 		Hibernate.initialize(indent.getItems());
@@ -363,7 +322,7 @@ public class IndentService implements IIndentService {
 	}
 
 	@Override
-	@Transactional
+	@Transactional(rollbackFor=DataCheckException.class)
 	public ObjectResult refundIndent(int userId, JSONArray jsonOrder, double refundPrice, String memberCard, boolean returnToStorage) {
 		Member member = null;
 		if (memberCard != null && memberCard.length() > 0){
@@ -394,8 +353,7 @@ public class IndentService implements IIndentService {
 			indent.addItem(detail);
 			totalprice += goods.getSellPrice() * amount;
 			if (returnToStorage){
-				goods.setLeftAmount(goods.getLeftAmount() + amount);
-				goodsDA.save(goods);
+				changeGoodsLeftAmount(goods, amount * (-1));
 			}
 		}
 		indent.setTotalPrice(totalprice);
@@ -404,46 +362,11 @@ public class IndentService implements IIndentService {
 		indent.setIndentType(ConstantValue.INDENT_TYPE_REFUND);
 		indentDA.save(indent);
 		if (member != null){
-			Date time = new Date();
-			boolean byScore = false;
-			boolean byDeposit = false;
-			double scorePerDollar = 0;
-			String branchName = "";
-			List<Configs> configs = configsDA.queryConfigs();
-			for(Configs config : configs){
-				if (ConstantValue.CONFIGS_MEMBERMGR_BYSCORE.equals(config.getName())){
-					byScore = Boolean.valueOf(config.getValue());
-				} else if (ConstantValue.CONFIGS_MEMBERMGR_SCOREPERDOLLAR.equals(config.getName())){
-					scorePerDollar = Double.parseDouble(config.getValue());
-				} else if (ConstantValue.CONFIGS_MEMBERMGR_BYDEPOSIT.equals(config.getName())){
-					byDeposit = Boolean.valueOf(config.getValue());
-				} else if (ConstantValue.CONFIGS_BRANCHNAME.equals(config.getName())){
-					branchName = config.getValue();
-				}
-			}
-			if (byScore && scorePerDollar > 0){
-				MemberScore ms = new MemberScore();
-				ms.setDate(time);
-				ms.setAmount(scorePerDollar * refundPrice * (-1));
-				ms.setPlace(branchName);
-				ms.setType(ConstantValue.MEMBERSCORE_REFUND);
-				ms.setMember(member);
-				memberScoreDA.save(ms);
-				member.setScore(member.getScore() + ms.getAmount());
-				member.setLastModifyTime(time);
-				memberDA.save(member);
-			}
-			if (byDeposit){
-				MemberConsumption mc = new MemberConsumption();
-				mc.setAmount(refundPrice * (-1));
-				mc.setDate(time);
-				mc.setMember(member);
-				mc.setPlace(branchName);
-				mc.setType(ConstantValue.MEMBERDEPOSIT_REFUND);
-				memberConsumptionDA.save(mc);
-				member.setBalanceMoney(member.getBalanceMoney() + refundPrice);
-				member.setLastModifyTime(time);
-				memberDA.save(member);
+			recordMemberScore(member, refundPrice * (-1));
+			try {
+				recordMemberConsumption(member, refundPrice * (-1));
+			} catch (DataCheckException e) {
+				logger.error("", e);
 			}
 		}
 		
@@ -452,7 +375,72 @@ public class IndentService implements IIndentService {
 		
 		return new ObjectResult(Result.OK, true, null);
 	}
+	
+	@Transactional
+	private void recordMemberScore(Member member, double amount){
+		Date time = new Date();
+		boolean byScore = false;
+		double scorePerDollar = 0;
+		String branchName = "";
+		List<Configs> configs = configsDA.queryConfigs();
+		for(Configs config : configs){
+			if (ConstantValue.CONFIGS_MEMBERMGR_BYSCORE.equals(config.getName())){
+				byScore = Boolean.valueOf(config.getValue());
+			} else if (ConstantValue.CONFIGS_MEMBERMGR_SCOREPERDOLLAR.equals(config.getName())){
+				scorePerDollar = Double.parseDouble(config.getValue());
+			} else if (ConstantValue.CONFIGS_BRANCHNAME.equals(config.getName())){
+				branchName = config.getValue();
+			}
+		}
+		if (byScore && scorePerDollar > 0){
+			MemberScore ms = new MemberScore();
+			ms.setDate(time);
+			ms.setAmount(scorePerDollar * amount);
+			ms.setPlace(branchName);
+			ms.setType(ConstantValue.MEMBERSCORE_REFUND);
+			ms.setMember(member);
+			memberScoreDA.save(ms);
+			member.setScore(member.getScore() + ms.getAmount());
+			member.setLastModifyTime(time);
+			memberDA.save(member);
+		}
+	}
+	
+	@Transactional
+	private void recordMemberConsumption(Member member, double amount) throws DataCheckException{
+		Date time = new Date();
+		boolean byDeposit = false;
+		String branchName = "";
+		List<Configs> configs = configsDA.queryConfigs();
+		for(Configs config : configs){
+			if (ConstantValue.CONFIGS_MEMBERMGR_BYDEPOSIT.equals(config.getName())){
+				byDeposit = Boolean.valueOf(config.getValue());
+			} else if (ConstantValue.CONFIGS_BRANCHNAME.equals(config.getName())){
+				branchName = config.getValue();
+			}
+		}
+		if (byDeposit){
+			if (member.getBalanceMoney() < amount){
+				throw new DataCheckException("Meber's balance is not enought to pay");
+			}
+			MemberConsumption mc = new MemberConsumption();
+			mc.setAmount(amount);
+			mc.setDate(time);
+			mc.setMember(member);
+			mc.setPlace(branchName);
+			mc.setType(ConstantValue.MEMBERDEPOSIT_REFUND);
+			memberConsumptionDA.save(mc);
+			member.setBalanceMoney(member.getBalanceMoney() - amount);
+			member.setLastModifyTime(time);
+			memberDA.save(member);
+		}
+	}
 
+	/**
+	 * 预售单
+	 * 库存数量不减, 如果预售单取消,不用考虑库存; 如果预售单转订单, 需要减去库存
+	 * 会员消费记录不存, 如果
+	 */
 	@Override
 	@Transactional
 	public ObjectResult prebuyIndent(int userId, JSONArray jsonOrder, String payWay, double paidPrice,
@@ -485,8 +473,6 @@ public class IndentService implements IIndentService {
 			detail.setSoldPrice(soldPrice);
 			indent.addItem(detail);
 			totalprice += goods.getSellPrice() * amount; 
-			goods.setLeftAmount(goods.getLeftAmount() - amount);
-			goodsDA.save(goods);
 		}
 		indent.setTotalPrice(totalprice);
 		indent.setPaidPrice(paidPrice);

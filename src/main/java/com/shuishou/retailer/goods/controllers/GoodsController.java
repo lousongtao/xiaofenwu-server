@@ -239,7 +239,7 @@ public class GoodsController extends BaseController {
 		return goodsService.deletePackageBind(userId, packageBindId);
 	}
 	
-	@RequestMapping(value="/goods/querypackagebinds", method = {RequestMethod.GET})
+	@RequestMapping(value="/goods/querypackagebinds", method = {RequestMethod.GET, RequestMethod.POST})
 	public @ResponseBody ObjectListResult queryPackageBind(
 			@RequestParam(value = "userId", required = true) int userId) throws Exception{
 		ObjectListResult result = goodsService.queryPackageBind(userId);
