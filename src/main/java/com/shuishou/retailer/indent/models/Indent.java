@@ -23,7 +23,9 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.shuishou.retailer.ConstantValue;
 
 @Entity
-@Table(indexes = {@Index(name = "idx_starttime", columnList = "createtime"), @Index(name="idx_membercard", columnList = "member_card")})
+@Table(indexes = {@Index(name = "idx_starttime", columnList = "createtime"), 
+		@Index(name="idx_membercard", columnList = "member_card"),
+		@Index(name="idx_indentcode", columnList = "indent_code")})
 public class Indent {
 
 	@Id
@@ -50,6 +52,9 @@ public class Indent {
 	@Column(name = "member_card")
 	private String memberCard;
 	
+	@Column(name="indent_code", nullable = false)
+	private String indentCode;
+	
 	/**
 	 * 区分 普通订单, 预购单, 退款单
 	 */
@@ -57,6 +62,14 @@ public class Indent {
 	private int indentType;
 	
 	
+
+	public String getIndentCode() {
+		return indentCode;
+	}
+
+	public void setIndentCode(String indentCode) {
+		this.indentCode = indentCode;
+	}
 
 	public int getIndentType() {
 		return indentType;

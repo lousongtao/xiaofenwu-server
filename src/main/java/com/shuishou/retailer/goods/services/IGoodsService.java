@@ -29,6 +29,8 @@ public interface IGoodsService {
 	
 	public ObjectListResult queryAllGoods();
 	
+	public ObjectResult queryGoodsByBarcode(String barcode);
+	
 	public ObjectResult addPackageBind(int userId, int bigPackageId, int smallPackageId, int rate);
 	public ObjectResult updatePackageBind(int userId, int packageBindId, int bigPackageId, int smallPackageId, int rate);
 	public ObjectListResult queryPackageBind(int userId);

@@ -353,6 +353,14 @@ public class GoodsService implements IGoodsService {
 	
 	@Override
 	@Transactional
+	public ObjectResult queryGoodsByBarcode(String barcode){
+		Goods goods = goodsDA.getGoodsByBarcode(barcode);
+		Hibernate.initialize(goods);
+		return new ObjectResult(Result.OK, true, goods);
+	}
+	
+	@Override
+	@Transactional
 	public ObjectResult addPackageBind(int userId, int bigPackageId, int smallPackageId, int rate) {
 		Goods big = goodsDA.getGoodsById(bigPackageId);
 		Goods small = goodsDA.getGoodsById(smallPackageId);

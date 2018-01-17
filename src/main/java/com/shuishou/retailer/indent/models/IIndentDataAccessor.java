@@ -19,7 +19,8 @@ public interface IIndentDataAccessor {
 	
 	public List<Indent> getAllIndent();
 	
-	public List<Indent> getIndents(int start, int limit, Date starttime, Date endtime, String payway, String member, List<String> orderbys, List<String> orderByDescs);
+	public List<Indent> getIndents(int start, int limit, Date starttime, Date endtime, String payway, String member, 
+			String indentCode, List<String> orderbys, List<String> orderByDescs);
 	
 	public List<Indent> getPrebuyIndents(int start, int limit, Date starttime, Date endtime, String member);
 	

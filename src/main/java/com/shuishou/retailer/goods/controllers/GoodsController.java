@@ -197,6 +197,13 @@ public class GoodsController extends BaseController {
 		return result;
 	}
 	
+	@RequestMapping(value="/goods/querygoodsbybarcode", method = {RequestMethod.POST})
+	public @ResponseBody ObjectResult queryGoodsByBarcode(
+			@RequestParam(value="barCode", required = true) String barcode) throws Exception{
+		ObjectResult result = goodsService.queryGoodsByBarcode(barcode);
+		return result;
+	}
+	
 	@RequestMapping(value = "/goods/addpackagebind", method = {RequestMethod.POST})
 	public @ResponseBody Result addPackageBind(
 			@RequestParam(value = "userId", required = true) int userId,

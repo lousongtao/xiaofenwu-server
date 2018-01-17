@@ -105,8 +105,11 @@ public class IndentService implements IIndentService {
 			}
 		}
 		double totalprice = 0;
+		Calendar calendar = Calendar.getInstance();
+		
 		Indent indent = new Indent();
-		indent.setCreateTime(Calendar.getInstance().getTime());
+		indent.setCreateTime(calendar.getTime());
+		indent.setIndentCode(ConstantValue.DFYMDHMS_2.format(calendar.getTime()));
 		for(int i = 0; i< jsonOrder.length(); i++){
 			JSONObject o = (JSONObject) jsonOrder.get(i);
 			int goodsid = o.getInt("id");
@@ -142,7 +145,7 @@ public class IndentService implements IIndentService {
 		UserData selfUser = userDA.getUserById(userId);
 		logService.write(selfUser, LogData.LogType.INDENT_MAKE.toString(), "User " + selfUser + " make order : " + indent.getId());
 		
-		return new ObjectResult(Result.OK, true, null);
+		return new ObjectResult(Result.OK, true, indent);
 	}
 	
 	/**
@@ -176,7 +179,7 @@ public class IndentService implements IIndentService {
 		
 	@Override
 	@Transactional
-	public ObjectListResult queryIndent(int start, int limit, String sstarttime, String sendtime, String payway, String member, String orderby, String orderbydesc) {
+	public ObjectListResult queryIndent(int start, int limit, String sstarttime, String sendtime, String payway, String member, String indentCode, String orderby, String orderbydesc) {
 		if (orderby != null && orderby.length() > 0
 				&& orderbydesc != null && orderbydesc.length() > 0){
 			return new ObjectListResult("orderby and orderbydesc are conplicted", false);
@@ -219,7 +222,7 @@ public class IndentService implements IIndentService {
 		int count = indentDA.getIndentCount(starttime, endtime, payway, member);
 		if (count >= 300)
 			return new ObjectListResult("Record is over 300, please change the filter", false, null, count);
-		List<Indent> indents = indentDA.getIndents(start, limit, starttime, endtime, payway, member, orderbys, orderbydescs);
+		List<Indent> indents = indentDA.getIndents(start, limit, starttime, endtime, payway, member, indentCode, orderbys, orderbydescs);
 		if (indents == null || indents.isEmpty())
 			return new ObjectListResult(Result.OK, true, null, 0);
 		for (int i = 0; i < indents.size(); i++) {
@@ -333,7 +336,9 @@ public class IndentService implements IIndentService {
 		}
 		double totalprice = 0;
 		Indent indent = new Indent();
-		indent.setCreateTime(Calendar.getInstance().getTime());
+		Calendar c = Calendar.getInstance();
+		indent.setCreateTime(c.getTime());
+		indent.setIndentCode(ConstantValue.DFYMDHMS_2.format(c.getTime()));
 		for(int i = 0; i< jsonOrder.length(); i++){
 			JSONObject o = (JSONObject) jsonOrder.get(i);
 			int goodsid = o.getInt("id");
@@ -373,7 +378,7 @@ public class IndentService implements IIndentService {
 		UserData selfUser = userDA.getUserById(userId);
 		logService.write(selfUser, LogData.LogType.INDENT_MAKE.toString(), "User " + selfUser + " make refund order : " + indent.getId());
 		
-		return new ObjectResult(Result.OK, true, null);
+		return new ObjectResult(Result.OK, true, indent);
 	}
 	
 	@Transactional
@@ -454,7 +459,9 @@ public class IndentService implements IIndentService {
 		}
 		double totalprice = 0;
 		Indent indent = new Indent();
-		indent.setCreateTime(Calendar.getInstance().getTime());
+		Calendar c = Calendar.getInstance();
+		indent.setCreateTime(c.getTime());
+		indent.setIndentCode(ConstantValue.DFYMDHMS_2.format(c.getTime()));
 		for(int i = 0; i< jsonOrder.length(); i++){
 			JSONObject o = (JSONObject) jsonOrder.get(i);
 			int goodsid = o.getInt("id");
@@ -488,7 +495,7 @@ public class IndentService implements IIndentService {
 		UserData selfUser = userDA.getUserById(userId);
 		logService.write(selfUser, LogData.LogType.INDENT_MAKE.toString(), "User " + selfUser + " make preorder : " + indent.getId());
 		
-		return new ObjectResult(Result.OK, true, null);
+		return new ObjectResult(Result.OK, true, indent);
 		
 	}
 	

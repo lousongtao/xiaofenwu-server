@@ -41,5 +41,11 @@ public class GoodsDataAccessor extends BaseDataAccessor implements IGoodsDataAcc
 		String hql = "from Goods where category1.id = "+category1Id;
 		return (List<Goods>)sessionFactory.getCurrentSession().createQuery(hql).list();
 	}
+
+	@Override
+	public Goods getGoodsByBarcode(String barcode) {
+		String hql = "from Goods where barcode = '" + barcode +"'";
+		return (Goods) sessionFactory.getCurrentSession().createQuery(hql).uniqueResult();
+	}
 	
 }

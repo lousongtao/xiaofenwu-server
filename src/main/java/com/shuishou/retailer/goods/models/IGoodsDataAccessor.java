@@ -17,6 +17,8 @@ public Session getSession();
 	
 	public Goods getGoodsById(int id);
 	
+	public Goods getGoodsByBarcode(String barcode);
+	
 	public List<Goods> getAllGoods();
 	
 	public List<Goods> getGoodsByParent(int category2Id);

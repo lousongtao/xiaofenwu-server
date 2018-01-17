@@ -49,7 +49,8 @@ public class IndentDataAccessor extends BaseDataAccessor implements IIndentDataA
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<Indent> getIndents(int start, int limit, Date starttime, Date endtime, String payway, String member, List<String> orderBys, List<String> orderByDescs) {
+	public List<Indent> getIndents(int start, int limit, Date starttime, Date endtime, String payway, String member, String indentCode, 
+			List<String> orderBys, List<String> orderByDescs) {
 		Criteria c = sessionFactory.getCurrentSession().createCriteria(Indent.class);
 		if (starttime != null)
 			c.add(Restrictions.ge("createTime", starttime));
@@ -60,6 +61,9 @@ public class IndentDataAccessor extends BaseDataAccessor implements IIndentDataA
 		}
 		if (member != null && member.length() > 0){
 			c.add(Restrictions.ilike("memberCard", "%"+member+"%"));
+		}
+		if (indentCode != null && indentCode.length() > 0){
+			c.add(Restrictions.ilike("indentCode", "%" + indentCode +"%"));
 		}
 		if (orderBys != null && !orderBys.isEmpty()){
 			for (int i = 0; i < orderBys.size(); i++) {

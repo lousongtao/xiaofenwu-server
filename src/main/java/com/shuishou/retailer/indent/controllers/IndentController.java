@@ -95,13 +95,14 @@ public class IndentController extends BaseController {
 			@RequestParam(value="endtime", required = false) String endtime,
 			@RequestParam(value="payway", required = false) String payway,
 			@RequestParam(value="member", required = false) String member,
+			@RequestParam(value="indentCode", required = false) String indentCode,
 			@RequestParam(value="orderby", required = false) String orderby,
 			@RequestParam(value="orderbydesc", required = false) String orderbydesc) throws Exception{
 		
 		int page = Integer.parseInt(pageStr);
 		int start = Integer.parseInt(startStr);
 		int limit = Integer.parseInt(limitStr);
-		return indentService.queryIndent(start, limit, starttime, endtime, payway, member,orderby,orderbydesc);
+		return indentService.queryIndent(start, limit, starttime, endtime, payway, member, indentCode, orderby,orderbydesc);
 	}
 	
 	@RequestMapping(value="/indent/queryprebuyindent", method = {RequestMethod.GET,RequestMethod.POST})
