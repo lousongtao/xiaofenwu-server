@@ -105,6 +105,13 @@ public class IndentController extends BaseController {
 		return indentService.queryIndent(start, limit, starttime, endtime, payway, member, indentCode, orderby,orderbydesc);
 	}
 	
+	@RequestMapping(value="/indent/queryindentforshiftwork", method = {RequestMethod.GET,RequestMethod.POST})
+	public @ResponseBody ObjectListResult queryIndentForShiftwork(
+			@RequestParam(value="shiftworkId", required = true) int shiftworkId) throws Exception{
+		
+		return indentService.queryIndentForShiftwork(shiftworkId);
+	}
+	
 	@RequestMapping(value="/indent/queryprebuyindent", method = {RequestMethod.GET,RequestMethod.POST})
 	public @ResponseBody ObjectListResult queryPrebuyIndent(
 			@RequestParam(value = "page", required = false, defaultValue = "0") String pageStr,

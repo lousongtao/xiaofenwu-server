@@ -45,6 +45,8 @@ import com.shuishou.retailer.indent.models.IndentDetail;
 import com.shuishou.retailer.indent.view.GoodsSellRecord;
 import com.shuishou.retailer.log.models.LogData;
 import com.shuishou.retailer.log.services.ILogService;
+import com.shuishou.retailer.management.models.IShiftWorkDataAccessor;
+import com.shuishou.retailer.management.models.ShiftWork;
 import com.shuishou.retailer.member.models.IMemberConsumptionDataAccessor;
 import com.shuishou.retailer.member.models.IMemberDataAccessor;
 import com.shuishou.retailer.member.models.IMemberScoreDataAccessor;
@@ -91,6 +93,9 @@ public class IndentService implements IIndentService {
 	@Autowired
 	private IPackageBindDataAccessor packageBindDA;
 	
+	@Autowired
+	private IShiftWorkDataAccessor shiftworkDA;
+	
 	
 	private DecimalFormat doubleFormat = new DecimalFormat("0.00");
 	
@@ -104,6 +109,8 @@ public class IndentService implements IIndentService {
 				return new ObjectResult("cannot find member by card " + memberCard, false);
 			}
 		}
+		UserData selfUser = userDA.getUserById(userId);
+		
 		double totalprice = 0;
 		Calendar calendar = Calendar.getInstance();
 		
@@ -136,13 +143,14 @@ public class IndentService implements IIndentService {
 		indent.setMemberCard(memberCard);
 		indent.setPayWay(payWay);
 		indent.setIndentType(ConstantValue.INDENT_TYPE_ORDER);
+		indent.setOperator(selfUser.getUsername());
 		indentDA.save(indent);
 		if (member != null){
 			recordMemberScore(member, paidPrice);
 			recordMemberConsumption(member, paidPrice);
 		}
 		
-		UserData selfUser = userDA.getUserById(userId);
+		
 		logService.write(selfUser, LogData.LogType.INDENT_MAKE.toString(), "User " + selfUser + " make order : " + indent.getId());
 		
 		return new ObjectResult(Result.OK, true, indent);
@@ -235,6 +243,28 @@ public class IndentService implements IIndentService {
 	
 	@Override
 	@Transactional
+	public ObjectListResult queryIndentForShiftwork(int shiftworkId) {
+		ShiftWork sw = shiftworkDA.getShiftWorkById(shiftworkId);
+		if (sw == null)
+			return new ObjectListResult("Cannot find Shiftwork record by id" + shiftworkId, false);
+		
+		Date starttime = sw.getStartTime();
+		Date endtime = sw.getEndTime();
+		if (endtime == null)
+			endtime = new Date();
+		List<Indent> indents = indentDA.getIndents(0, 10000, starttime, endtime, null, null, null, null, null);
+		if (indents == null || indents.isEmpty())
+			return new ObjectListResult(Result.OK, true, null, 0);
+		for (int i = 0; i < indents.size(); i++) {
+			Indent indent = indents.get(i);
+			Hibernate.initialize(indent);
+			Hibernate.initialize(indent.getItems());
+		}
+		return new ObjectListResult(Result.OK, true, (ArrayList<Indent>)indents, indents.size());
+	}
+	
+	@Override
+	@Transactional
 	public ObjectListResult queryPrebuyIndent(int start, int limit, String sStarttime, String sEndtime, String member) {
 		
 		Date starttime = null;
@@ -269,29 +299,52 @@ public class IndentService implements IIndentService {
 	 */
 	@Override
 	@Transactional(rollbackFor=DataCheckException.class)
-	public ObjectResult changePreOrderToOrder(int userId, int indentId) throws DataCheckException {
-		Indent indent = indentDA.getIndentById(indentId);
-		if (indent == null){
-			return new ObjectResult("cannot find indent by id "+indentId, false);
+	public ObjectResult changePreOrderToOrder(int userId, int preindentId) throws DataCheckException {
+		Indent preindent = indentDA.getIndentById(preindentId);
+		if (preindent == null){
+			return new ObjectResult("cannot find indent by id "+preindentId, false);
 		}
 		Member member = null;
-		if (indent.getMemberCard() != null && indent.getMemberCard().length() > 0){
-			member = memberDA.getMemberByCard(indent.getMemberCard());
+		if (preindent.getMemberCard() != null &&preindent.getMemberCard().length() > 0){
+			member = memberDA.getMemberByCard(preindent.getMemberCard());
 			if (member == null)
-				return new ObjectResult("cannot find member by card " + indent.getMemberCard(), false);
+				return new ObjectResult("cannot find member by card " + preindent.getMemberCard(), false);
 		}
+		UserData selfUser = userDA.getUserById(userId);
+		Indent indent = new Indent();
+		Date date = new Date();
 		indent.setIndentType(ConstantValue.INDENT_TYPE_ORDER);
-		indent.setCreateTime(new Date());
-		indentDA.save(indent);
-		List<IndentDetail> details = indent.getItems();
-		for (int i = 0; i < details.size(); i++) {
-			IndentDetail detail = details.get(i);
-			Goods goods = goodsDA.getGoodsById(detail.getGoodsId());
+		indent.setCreateTime(date);
+		indent.setOperator(selfUser.getUsername());
+		indent.setIndentCode(ConstantValue.DFYMDHMS_2.format(date));
+		indent.setMemberCard(preindent.getMemberCard());
+		indent.setPaidPrice(preindent.getPaidPrice());
+		indent.setTotalPrice(preindent.getTotalPrice());
+		indent.setPayWay(preindent.getPayWay());
+		indent.setIndentType(ConstantValue.INDENT_TYPE_ORDER);
+		
+		List<IndentDetail> predetails = preindent.getItems();
+		for (int i = 0; i < predetails.size(); i++) {
+			IndentDetail predetail = predetails.get(i);
+			Goods goods = goodsDA.getGoodsById(predetail.getGoodsId());
 			if (goods == null){
-				throw new DataCheckException("cannot find goods by id "+ detail.getGoodsId());
+				throw new DataCheckException("cannot find goods by id "+ predetail.getGoodsId());
 			}
-			changeGoodsLeftAmount(goods, detail.getAmount());
+			changeGoodsLeftAmount(goods, predetail.getAmount());
+			//copy every detail to new indent
+			IndentDetail detail = new IndentDetail();
+			detail.setAmount(predetail.getAmount());
+			detail.setGoodsId(predetail.getGoodsId());
+			detail.setGoodsName(predetail.getGoodsName());
+			detail.setGoodsPrice(predetail.getGoodsPrice());
+			detail.setSoldPrice(predetail.getSoldPrice());
+			detail.setIndent(indent);
+			indentDetailDA.save(detail);
+			indent.addItem(detail);
 		}
+		indentDA.save(indent);
+		preindent.setIndentType(ConstantValue.INDENT_TYPE_PREBUY_FINISHED);
+		indentDA.save(preindent);
 		if (member != null){
 			double paidPrice = indent.getPaidPrice();
 			recordMemberScore(member, paidPrice);
@@ -299,8 +352,8 @@ public class IndentService implements IIndentService {
 		}
 		Hibernate.initialize(indent);
 		Hibernate.initialize(indent.getItems());
-		UserData selfUser = userDA.getUserById(userId);
-		logService.write(selfUser, LogData.LogType.INDENT_MAKE.toString(), "User " + selfUser + " make preorder to order : " + indent.getId());
+		
+		logService.write(selfUser, LogData.LogType.INDENT_MAKE.toString(), "User " + selfUser + " make preorder (id="+preindentId+") to order (id=" + indent.getId()+")");
 		return new ObjectResult(Result.OK, true, indent);
 	}
 	
@@ -334,11 +387,13 @@ public class IndentService implements IIndentService {
 				return new ObjectResult("cannot find member by card " + memberCard, false);
 			}
 		}
+		UserData selfUser = userDA.getUserById(userId);
 		double totalprice = 0;
 		Indent indent = new Indent();
 		Calendar c = Calendar.getInstance();
 		indent.setCreateTime(c.getTime());
 		indent.setIndentCode(ConstantValue.DFYMDHMS_2.format(c.getTime()));
+		indent.setOperator(selfUser.getUsername());
 		for(int i = 0; i< jsonOrder.length(); i++){
 			JSONObject o = (JSONObject) jsonOrder.get(i);
 			int goodsid = o.getInt("id");
@@ -375,7 +430,7 @@ public class IndentService implements IIndentService {
 			}
 		}
 		
-		UserData selfUser = userDA.getUserById(userId);
+		
 		logService.write(selfUser, LogData.LogType.INDENT_MAKE.toString(), "User " + selfUser + " make refund order : " + indent.getId());
 		
 		return new ObjectResult(Result.OK, true, indent);
@@ -457,11 +512,13 @@ public class IndentService implements IIndentService {
 				return new ObjectResult("cannot find member by card " + memberCard, false);
 			}
 		}
+		UserData selfUser = userDA.getUserById(userId);
 		double totalprice = 0;
 		Indent indent = new Indent();
 		Calendar c = Calendar.getInstance();
 		indent.setCreateTime(c.getTime());
 		indent.setIndentCode(ConstantValue.DFYMDHMS_2.format(c.getTime()));
+		indent.setOperator(selfUser.getUsername());
 		for(int i = 0; i< jsonOrder.length(); i++){
 			JSONObject o = (JSONObject) jsonOrder.get(i);
 			int goodsid = o.getInt("id");
@@ -492,7 +549,7 @@ public class IndentService implements IIndentService {
 		indentDA.save(indent);
 		
 		
-		UserData selfUser = userDA.getUserById(userId);
+		
 		logService.write(selfUser, LogData.LogType.INDENT_MAKE.toString(), "User " + selfUser + " make preorder : " + indent.getId());
 		
 		return new ObjectResult(Result.OK, true, indent);

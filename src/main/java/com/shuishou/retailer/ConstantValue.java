@@ -43,6 +43,7 @@ public class ConstantValue {
 	public static final int INDENT_TYPE_REFUND = 2;//退货单
 	public static final int INDENT_TYPE_PREBUY_PAID = 3;//预购单已付款
 	public static final int INDENT_TYPE_PREBUY_UNPAID = 4;//预购单未付款
+	public static final int INDENT_TYPE_PREBUY_FINISHED = 5;//预购单完结,已经转为订单
 	
 	//付款方式
 	public static final String INDENT_PAYWAY_CASH = "cash";//现金

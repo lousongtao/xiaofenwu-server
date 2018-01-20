@@ -19,6 +19,8 @@ import com.shuishou.retailer.account.models.IUserDataAccessor;
 import com.shuishou.retailer.account.models.UserData;
 import com.shuishou.retailer.common.models.IPayWayDataAccessor;
 import com.shuishou.retailer.common.models.PayWay;
+import com.shuishou.retailer.indent.models.IIndentDataAccessor;
+import com.shuishou.retailer.indent.models.Indent;
 import com.shuishou.retailer.log.models.LogData;
 import com.shuishou.retailer.log.services.ILogService;
 import com.shuishou.retailer.management.models.IShiftWorkDataAccessor;
@@ -47,6 +49,10 @@ public class ManagementService implements IManagementService{
 	
 	@Autowired
 	private IPayWayDataAccessor paywayDA;
+	
+	@Autowired
+	private IIndentDataAccessor indentDA;
+	
 	
 	@Override
 	@Transactional
@@ -139,6 +145,29 @@ public class ManagementService implements IManagementService{
 		if (sw == null){
 			return new ObjectResult("cannot find shift work record by id "+ shiftWorkId, false);
 		}
+		Date starttime = sw.getStartTime();
+		Date endtime = sw.getEndTime();
+		if (endtime == null)
+			endtime = new Date();
+		List<Indent> indents = indentDA.getIndents(0, 10000, starttime, endtime, null, null, null, null, null);
+		if (indents == null || indents.isEmpty())
+			return new ObjectResult(Result.OK, true, null);
+		
+		long millsecs = (sw.getEndTime() == null ? new Date().getTime() : sw.getEndTime().getTime()) - sw.getStartTime().getTime();
+		int hours = (int)(millsecs / (60*60*1000));
+		int minutes = (int)((millsecs - hours * 60 * 60 * 1000)/(60*1000));
+		int seconds = (int)((millsecs - hours * 60 * 60 * 1000 - minutes * 60 * 1000)/1000);
+		String workPeriod = (hours > 0 ? hours+"h " : "") + minutes + "m " + seconds + "s";
+		
+		int indentAmount = 0;
+		int goodsAmount = 0;
+		double cashMoney = 0;
+		double bankcardMoney = 0;
+		double memberMoney = 0;
+		double totalPrice = 0;
+		double paidPrice = 0;
+		HashMap<String, Double> mapOtherPay = new HashMap<>();//other pay way money
+		
 		return new ObjectResult(Result.OK, true);
 	}
 }

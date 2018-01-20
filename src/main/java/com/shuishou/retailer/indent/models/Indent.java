@@ -55,6 +55,9 @@ public class Indent {
 	@Column(name="indent_code", nullable = false)
 	private String indentCode;
 	
+	@Column
+	private String operator;//操作人
+	
 	/**
 	 * 区分 普通订单, 预购单, 退款单
 	 */
@@ -62,6 +65,14 @@ public class Indent {
 	private int indentType;
 	
 	
+
+	public String getOperator() {
+		return operator;
+	}
+
+	public void setOperator(String operator) {
+		this.operator = operator;
+	}
 
 	public String getIndentCode() {
 		return indentCode;
