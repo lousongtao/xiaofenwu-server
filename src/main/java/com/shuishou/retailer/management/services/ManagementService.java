@@ -149,7 +149,7 @@ public class ManagementService implements IManagementService{
 		Date endtime = sw.getEndTime();
 		if (endtime == null)
 			endtime = new Date();
-		List<Indent> indents = indentDA.getIndents(0, 10000, starttime, endtime, null, null, null, null, null);
+		List<Indent> indents = indentDA.getIndents(0, 10000, starttime, endtime, null, null, null, null, null, null);
 		if (indents == null || indents.isEmpty())
 			return new ObjectResult(Result.OK, true, null);
 		

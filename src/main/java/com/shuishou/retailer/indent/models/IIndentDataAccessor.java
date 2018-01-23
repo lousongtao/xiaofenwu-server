@@ -20,12 +20,12 @@ public interface IIndentDataAccessor {
 	public List<Indent> getAllIndent();
 	
 	public List<Indent> getIndents(int start, int limit, Date starttime, Date endtime, String payway, String member, 
-			String indentCode, List<String> orderbys, List<String> orderByDescs);
+			String indentCode, Integer[] types, List<String> orderbys, List<String> orderByDescs);
 	
 	public List<Indent> getPrebuyIndents(int start, int limit, Date starttime, Date endtime, String member);
 	
 	public List<Indent> getIndentsByTime(Date starttime, Date endtime);
 	
-	public int getIndentCount(Date starttime, Date endtime, String payway, String member);
+	public int getIndentCount(Date starttime, Date endtime, String payway, String member, Integer[] types);
 	
 }

@@ -30,7 +30,7 @@ public class Goods {
 	@JoinColumn
 	private Category2 category2;
 	
-	@Column(nullable = false)
+	@Column
 	private String barcode;
 	
 	//进货价

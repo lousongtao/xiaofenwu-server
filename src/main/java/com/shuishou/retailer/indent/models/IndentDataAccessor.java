@@ -49,7 +49,7 @@ public class IndentDataAccessor extends BaseDataAccessor implements IIndentDataA
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<Indent> getIndents(int start, int limit, Date starttime, Date endtime, String payway, String member, String indentCode, 
+	public List<Indent> getIndents(int start, int limit, Date starttime, Date endtime, String payway, String member, String indentCode, Integer[] types,
 			List<String> orderBys, List<String> orderByDescs) {
 		Criteria c = sessionFactory.getCurrentSession().createCriteria(Indent.class);
 		if (starttime != null)
@@ -64,6 +64,9 @@ public class IndentDataAccessor extends BaseDataAccessor implements IIndentDataA
 		}
 		if (indentCode != null && indentCode.length() > 0){
 			c.add(Restrictions.ilike("indentCode", "%" + indentCode +"%"));
+		}
+		if (types != null && types.length > 0){
+			c.add(Restrictions.in("indentType", types));
 		}
 		if (orderBys != null && !orderBys.isEmpty()){
 			for (int i = 0; i < orderBys.size(); i++) {
@@ -81,7 +84,7 @@ public class IndentDataAccessor extends BaseDataAccessor implements IIndentDataA
 	}
 	
 	@Override
-	public int getIndentCount(Date starttime, Date endtime, String payway, String member) {
+	public int getIndentCount(Date starttime, Date endtime, String payway, String member, Integer[] types) {
 		String countStmt = "select count(l) from Indent l";
 		List<String> condList = Lists.newArrayList();
 		if (starttime != null){
@@ -95,6 +98,16 @@ public class IndentDataAccessor extends BaseDataAccessor implements IIndentDataA
 		}
 		if (member != null && member.length() > 0){
 			condList.add("l.memberCard = :member");
+		}
+		if (types != null && types.length > 0){
+			String s = "l.indentType in (";
+			for (int i = 0; i < types.length; i++) {
+				if (i != 0)
+					s += ",";
+				s += types[i];
+			}
+			s += ")";
+			condList.add(s);
 		}
 		for (int i = 0; i < condList.size(); i++) {
 			countStmt += (i == 0 ? " where " : " and ") + condList.get(i);

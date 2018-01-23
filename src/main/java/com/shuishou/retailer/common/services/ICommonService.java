@@ -21,7 +21,9 @@ public interface ICommonService {
 	
 	ObjectListResult getPayWays();
 	
-	ObjectResult savePayWay(int userId, String name);
+	ObjectResult addPayWay(int userId, String name, double rate, int sequence);
+	
+	ObjectResult updatePayWay(int userId, int id, String name, double rate, int sequence);
 	
 	ObjectResult deletePayWay(int userId, int id);
 	

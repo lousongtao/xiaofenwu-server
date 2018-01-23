@@ -236,9 +236,11 @@ public class CommonService implements ICommonService {
 
 	@Override
 	@Transactional
-	public ObjectResult savePayWay(int userId, String name) {
+	public ObjectResult addPayWay(int userId, String name, double rate, int sequence) {
 		PayWay payWay = new PayWay();
 		payWay.setName(name);
+		payWay.setRate(rate);
+		payWay.setSequence(sequence);
 		payWayDA.insertPayWay(payWay);
 		
 		// write log.
@@ -246,9 +248,30 @@ public class CommonService implements ICommonService {
 		logService.write(selfUser, LogData.LogType.CHANGE_PAYWAY.toString(), 
 				"User "+ selfUser + " add pay way "+ name);
 
-		return new ObjectResult(Result.OK, true);
+		return new ObjectResult(Result.OK, true, payWay);
 	}
 
+	@Override
+	@Transactional
+	public ObjectResult updatePayWay(int userId, int id, String name, double rate, int sequence) {
+		
+		PayWay payWay = payWayDA.getPayWayById(id);
+		if (payWay == null){
+			return new ObjectResult("Cannot find PayWay by id "+ id, false);
+		}
+		payWay.setName(name);
+		payWay.setRate(rate);
+		payWay.setSequence(sequence);
+		payWayDA.updatePayWay(payWay);
+		
+		// write log.
+		UserData selfUser = userDA.getUserById(userId);
+		logService.write(selfUser, LogData.LogType.CHANGE_PAYWAY.toString(), 
+				"User "+ selfUser + " update pay way "+ name);
+
+		return new ObjectResult(Result.OK, true, payWay);
+	}
+	
 	@Override
 	@Transactional
 	public ObjectResult deletePayWay(int userId, int id) {

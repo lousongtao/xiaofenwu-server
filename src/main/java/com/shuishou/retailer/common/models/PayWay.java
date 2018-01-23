@@ -21,6 +21,12 @@ public class PayWay {
 	@Column(name = "name", nullable = false, unique = true)
 	private String name;
 	
+	@Column(nullable = false)
+	private double rate;
+	
+	@Column(nullable = false)
+	private int sequence;
+	
 	public PayWay(){}
 	
 	public PayWay(int id, String name){
@@ -37,12 +43,28 @@ public class PayWay {
 	}
 
 
+	public int getSequence() {
+		return sequence;
+	}
+
+	public void setSequence(int sequence) {
+		this.sequence = sequence;
+	}
+
 	public String getName() {
 		return name;
 	}
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public double getRate() {
+		return rate;
+	}
+
+	public void setRate(double rate) {
+		this.rate = rate;
 	}
 
 	@Override

@@ -44,7 +44,7 @@ public class IndentController extends BaseController {
 		try{
 			ObjectResult result = indentService.saveIndent(userId, jsonOrder, payWay, paidPrice, member);
 			return result;
-		}catch(DataCheckException ex){
+		} catch(DataCheckException ex){
 			return new ObjectResult(ex.getMessage(), false);
 		}
 	}
@@ -53,12 +53,15 @@ public class IndentController extends BaseController {
 	public @ResponseBody ObjectResult refundOrder(
 			@RequestParam(value = "userId", required = true) int userId,
 			@RequestParam(value="indents", required = true) String indents,
-			@RequestParam(value="refundPrice", required = true) double refundPrice,
+//			@RequestParam(value="refundPrice", required = true) double refundPrice,
 			@RequestParam(value="returnToStorage", required = true) boolean returnToStorage,
 			@RequestParam(value="member", required = false, defaultValue = "") String member) throws Exception{
 		JSONArray jsonOrder = new JSONArray(indents);
-		
-		return indentService.refundIndent(userId, jsonOrder, refundPrice, member, returnToStorage);
+		try{
+			return indentService.refundIndent(userId, jsonOrder, member, returnToStorage);
+		} catch(DataCheckException ex){
+			return new ObjectResult(ex.getMessage(), false);
+		}
 	}
 	
 	@RequestMapping(value="/indent/prebuyindent", method = (RequestMethod.POST))
@@ -95,6 +98,7 @@ public class IndentController extends BaseController {
 			@RequestParam(value="endtime", required = false) String endtime,
 			@RequestParam(value="payway", required = false) String payway,
 			@RequestParam(value="member", required = false) String member,
+			@RequestParam(value="type", required = false) String sType,
 			@RequestParam(value="indentCode", required = false) String indentCode,
 			@RequestParam(value="orderby", required = false) String orderby,
 			@RequestParam(value="orderbydesc", required = false) String orderbydesc) throws Exception{
@@ -102,7 +106,15 @@ public class IndentController extends BaseController {
 		int page = Integer.parseInt(pageStr);
 		int start = Integer.parseInt(startStr);
 		int limit = Integer.parseInt(limitStr);
-		return indentService.queryIndent(start, limit, starttime, endtime, payway, member, indentCode, orderby,orderbydesc);
+		Integer[] types = null;
+		if ("ORDER".equals(sType)){
+			types = new Integer[]{ConstantValue.INDENT_TYPE_ORDER};
+		} else if ("REFUND".equals(sType)){
+			types = new Integer[]{ConstantValue.INDENT_TYPE_REFUND};
+		} else if ("PREORDER".equals(sType)){
+			types = new Integer[]{ConstantValue.INDENT_TYPE_PREBUY_PAID, ConstantValue.INDENT_TYPE_PREBUY_UNPAID};
+		}
+		return indentService.queryIndent(start, limit, starttime, endtime, payway, member, indentCode, types, orderby,orderbydesc);
 	}
 	
 	@RequestMapping(value="/indent/queryindentforshiftwork", method = {RequestMethod.GET,RequestMethod.POST})

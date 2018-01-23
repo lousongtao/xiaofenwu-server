@@ -11,13 +11,13 @@ import com.shuishou.retailer.views.ObjectResult;
 
 public interface IIndentService {
 	ObjectResult saveIndent(int userId, JSONArray jsonOrder, String payway, double paidPrice, String memberCard) throws DataCheckException;
-	ObjectListResult queryIndent(int start, int limit, String sstarttime, String sendtime, String payway, String member, String indentCode, String orderby, String orderbydesc);
+	ObjectListResult queryIndent(int start, int limit, String sstarttime, String sendtime, String payway, String member, String indentCode, Integer[] types, String orderby, String orderbydesc);
 	ObjectResult printIndent(int userId, int indentId);
 	ObjectListResult queryPrebuyIndent(int start, int limit, String sstarttime, String sendtime, String member);
 	ObjectListResult queryGoodsSoldRecord(int goodsId, String sstarttime, String sendtime, String payway, String member);
 	ObjectListResult queryIndentForShiftwork(int shiftworkId);
 	ObjectResult changePreOrderToOrder(int userId, int indentId) throws DataCheckException;
 	ObjectResult deletePreOrder(int userId, int indentId);
-	ObjectResult refundIndent(int userId, JSONArray jsonOrder, double refundPrice, String memberCard, boolean returnToStorage);
+	ObjectResult refundIndent(int userId, JSONArray jsonOrder, String memberCard, boolean returnToStorage) throws DataCheckException;
 	ObjectResult prebuyIndent(int userId, JSONArray jsonOrder, String payway, double paidPrice, String memberCard, boolean paid);
 }

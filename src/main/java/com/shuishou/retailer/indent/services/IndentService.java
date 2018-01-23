@@ -187,7 +187,7 @@ public class IndentService implements IIndentService {
 		
 	@Override
 	@Transactional
-	public ObjectListResult queryIndent(int start, int limit, String sstarttime, String sendtime, String payway, String member, String indentCode, String orderby, String orderbydesc) {
+	public ObjectListResult queryIndent(int start, int limit, String sstarttime, String sendtime, String payway, String member, String indentCode, Integer[] types, String orderby, String orderbydesc) {
 		if (orderby != null && orderby.length() > 0
 				&& orderbydesc != null && orderbydesc.length() > 0){
 			return new ObjectListResult("orderby and orderbydesc are conplicted", false);
@@ -227,10 +227,10 @@ public class IndentService implements IIndentService {
 				e.printStackTrace();
 			}
 		}
-		int count = indentDA.getIndentCount(starttime, endtime, payway, member);
-		if (count >= 300)
-			return new ObjectListResult("Record is over 300, please change the filter", false, null, count);
-		List<Indent> indents = indentDA.getIndents(start, limit, starttime, endtime, payway, member, indentCode, orderbys, orderbydescs);
+		int count = indentDA.getIndentCount(starttime, endtime, payway, member, types);
+		if (count >= 1000)
+			return new ObjectListResult("Record is over 1000, please change the filter", false, null, count);
+		List<Indent> indents = indentDA.getIndents(start, limit, starttime, endtime, payway, member, indentCode, types, orderbys, orderbydescs);
 		if (indents == null || indents.isEmpty())
 			return new ObjectListResult(Result.OK, true, null, 0);
 		for (int i = 0; i < indents.size(); i++) {
@@ -252,7 +252,7 @@ public class IndentService implements IIndentService {
 		Date endtime = sw.getEndTime();
 		if (endtime == null)
 			endtime = new Date();
-		List<Indent> indents = indentDA.getIndents(0, 10000, starttime, endtime, null, null, null, null, null);
+		List<Indent> indents = indentDA.getIndents(0, 10000, starttime, endtime, null, null, null, null, null, null);
 		if (indents == null || indents.isEmpty())
 			return new ObjectListResult(Result.OK, true, null, 0);
 		for (int i = 0; i < indents.size(); i++) {
@@ -379,7 +379,7 @@ public class IndentService implements IIndentService {
 
 	@Override
 	@Transactional(rollbackFor=DataCheckException.class)
-	public ObjectResult refundIndent(int userId, JSONArray jsonOrder, double refundPrice, String memberCard, boolean returnToStorage) {
+	public ObjectResult refundIndent(int userId, JSONArray jsonOrder, String memberCard, boolean returnToStorage) throws DataCheckException {
 		Member member = null;
 		if (memberCard != null && memberCard.length() > 0){
 			member = memberDA.getMemberByCard(memberCard);
@@ -389,6 +389,7 @@ public class IndentService implements IIndentService {
 		}
 		UserData selfUser = userDA.getUserById(userId);
 		double totalprice = 0;
+		double totalSoldPrice = 0;
 		Indent indent = new Indent();
 		Calendar c = Calendar.getInstance();
 		indent.setCreateTime(c.getTime());
@@ -401,7 +402,7 @@ public class IndentService implements IIndentService {
 			double soldPrice = o.getDouble("soldPrice");
 			Goods goods = goodsDA.getGoodsById(goodsid);
 			if (goods == null){
-				return new ObjectResult("cannot find goods by id "+ goodsid, false);
+				throw new DataCheckException("cannot find goods by id "+ goodsid);
 			}
 			IndentDetail detail = new IndentDetail();
 			detail.setIndent(indent);
@@ -411,20 +412,21 @@ public class IndentService implements IIndentService {
 			detail.setGoodsPrice(goods.getSellPrice());
 			detail.setSoldPrice(soldPrice);
 			indent.addItem(detail);
+			totalSoldPrice += soldPrice;
 			totalprice += goods.getSellPrice() * amount;
 			if (returnToStorage){
 				changeGoodsLeftAmount(goods, amount * (-1));
 			}
 		}
 		indent.setTotalPrice(totalprice);
-		indent.setPaidPrice(refundPrice);
+		indent.setPaidPrice(totalSoldPrice);
 		indent.setMemberCard(memberCard);
 		indent.setIndentType(ConstantValue.INDENT_TYPE_REFUND);
 		indentDA.save(indent);
 		if (member != null){
-			recordMemberScore(member, refundPrice * (-1));
+			recordMemberScore(member, totalSoldPrice * (-1));
 			try {
-				recordMemberConsumption(member, refundPrice * (-1));
+				recordMemberConsumption(member, totalSoldPrice * (-1));
 			} catch (DataCheckException e) {
 				logger.error("", e);
 			}
