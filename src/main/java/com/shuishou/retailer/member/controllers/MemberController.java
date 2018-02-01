@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.shuishou.retailer.BaseController;
 import com.shuishou.retailer.ConstantValue;
+import com.shuishou.retailer.ServerProperties;
 import com.shuishou.retailer.account.services.IPermissionService;
+import com.shuishou.retailer.member.services.IMemberCloudService;
 import com.shuishou.retailer.member.services.IMemberService;
 import com.shuishou.retailer.views.ObjectListResult;
 import com.shuishou.retailer.views.ObjectResult;
@@ -27,6 +29,9 @@ public class MemberController extends BaseController {
 	@Autowired
 	private IMemberService memberService;
 	
+	@Autowired
+	private IMemberCloudService memberCloudService;
+	
 	@RequestMapping(value = "/member/querymember", method = {RequestMethod.POST})
 	public @ResponseBody ObjectListResult queryMember(
 			@RequestParam(value = "userId", required = true) int userId,
@@ -38,20 +43,20 @@ public class MemberController extends BaseController {
 		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_QUERY_MEMBER)){
 			return new ObjectListResult("no_permission", false);
 		}
-		
-		ObjectListResult result = memberService.queryMember(name, memberCard, address, postCode, telephone);
-		
-		return result;
-		
+		if (ServerProperties.MEMBERLOCATION_LOCAL.equals(ServerProperties.MEMBERLOCATION)){
+			return memberService.queryMember(name, memberCard, address, postCode, telephone);
+		} else {
+			return memberCloudService.queryMember(name, memberCard, address, postCode, telephone);
+		}
 	}
 	
 	@RequestMapping(value = "/member/queryallmember", method = {RequestMethod.GET, RequestMethod.POST})
 	public @ResponseBody ObjectListResult queryAllMember() throws Exception{
-		@SuppressWarnings("rawtypes")
-		ObjectListResult result = memberService.queryAllMember();
-		
-		return result;
-		
+		if (ServerProperties.MEMBERLOCATION_LOCAL.equals(ServerProperties.MEMBERLOCATION)){
+			return memberService.queryAllMember();
+		} else {
+			return memberCloudService.queryAllMember();
+		}
 	}
 	
 	@RequestMapping(value = "/member/addmember", method = {RequestMethod.POST})
@@ -72,9 +77,11 @@ public class MemberController extends BaseController {
 			birth = ConstantValue.DFYMD.parse(sBirth);
 		}
 		try{
-			ObjectResult result = memberService.addMember(userId, name, memberCard, address, postCode, telephone, birth, discountRate);
-		
-			return result;
+			if (ServerProperties.MEMBERLOCATION_LOCAL.equals(ServerProperties.MEMBERLOCATION)){
+				return memberService.addMember(userId, name, memberCard, address, postCode, telephone, birth, discountRate);
+			} else {
+				return memberCloudService.addMember(userId, name, memberCard, address, postCode, telephone, birth, discountRate);
+			}
 		} catch(Exception e){
 			log.error(ConstantValue.DFYMDHMS.format(new Date()));
 	        log.error("", e);
@@ -102,9 +109,11 @@ public class MemberController extends BaseController {
 			birth = ConstantValue.DFYMD.parse(sBirth);
 		}
 		try{
-			ObjectResult result = memberService.updateMember(userId, id, name, memberCard, address, postCode, telephone, birth, discountRate);
-		
-			return result;
+			if (ServerProperties.MEMBERLOCATION_LOCAL.equals(ServerProperties.MEMBERLOCATION)){
+				return memberService.updateMember(userId, id, name, memberCard, address, postCode, telephone, birth, discountRate);
+			} else {
+				return memberCloudService.updateMember(userId, id, name, memberCard, address, postCode, telephone, birth, discountRate);
+			}
 		} catch(Exception e){
 			log.error(ConstantValue.DFYMDHMS.format(new Date()));
 	        log.error("", e);
@@ -121,10 +130,11 @@ public class MemberController extends BaseController {
 		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_UPDATE_MEMBERSCORE)){
 			return new ObjectResult("no_permission", false);
 		}
-		ObjectResult result = memberService.updateMemberScore(userId, id, newScore);
-		
-		return result;
-		
+		if (ServerProperties.MEMBERLOCATION_LOCAL.equals(ServerProperties.MEMBERLOCATION)){
+			return memberService.updateMemberScore(userId, id, newScore);
+		} else {
+			return memberCloudService.updateMemberScore(userId, id, newScore);
+		}
 	}
 	
 	@RequestMapping(value = "/member/updatememberbalance", method = {RequestMethod.POST})
@@ -135,9 +145,26 @@ public class MemberController extends BaseController {
 		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_UPDATE_MEMBERBALANCE)){
 			return new ObjectResult("no_permission", false);
 		}
-		ObjectResult result = memberService.updateMemberBalance(userId, id, newBalance);
-		
-		return result;
-		
+		if (ServerProperties.MEMBERLOCATION_LOCAL.equals(ServerProperties.MEMBERLOCATION)){
+			return memberService.updateMemberBalance(userId, id, newBalance);
+		} else {
+			return memberCloudService.updateMemberBalance(userId, id, newBalance);
+		}
 	}
+	
+	@RequestMapping(value = "/member/memberrecharge", method = {RequestMethod.POST})
+	public @ResponseBody ObjectResult memberRecharge(
+			@RequestParam(value = "userId", required = true) int userId,
+			@RequestParam(value = "id", required = true) int id,
+			@RequestParam(value = "rechargeValue", required = true) double rechargeValue) throws Exception{
+		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_UPDATE_MEMBERBALANCE)){
+			return new ObjectResult("no_permission", false);
+		}
+		if (ServerProperties.MEMBERLOCATION_LOCAL.equals(ServerProperties.MEMBERLOCATION)){
+			return memberService.memberRecharge(userId, id, rechargeValue);
+		} else {
+			return memberCloudService.memberRecharge(userId, id, rechargeValue);
+		}
+	}
+
 }

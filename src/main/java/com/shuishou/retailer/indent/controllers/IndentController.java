@@ -177,14 +177,4 @@ public class IndentController extends BaseController {
 					
 	}
 	
-	@RequestMapping(value="/indent/printindent", method = (RequestMethod.POST))
-	public @ResponseBody ObjectResult printIndent(
-			@RequestParam(value = "userId", required = true) int userId,
-			@RequestParam(value="indentId", required = true) int indentId) throws Exception{
-		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_QUERY_ORDER)){
-			return new ObjectResult("no_permission", false);
-		}
-		return indentService.printIndent(userId, indentId);
-	}
-	
 }

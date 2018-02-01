@@ -58,7 +58,8 @@
     <beans:property name="suffix" value=".jsp" />
   </beans:bean>
   
-  <context:component-scan base-package="com.shuishou.retailer.*" />
+
+  <context:component-scan base-package="com.shuishou.retailer.**" />
   
   <beans:bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
     <beans:property name="driverClassName" value="com.mysql.jdbc.Driver" />

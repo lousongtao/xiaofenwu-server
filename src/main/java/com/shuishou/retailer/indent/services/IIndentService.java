@@ -12,7 +12,6 @@ import com.shuishou.retailer.views.ObjectResult;
 public interface IIndentService {
 	ObjectResult saveIndent(int userId, JSONArray jsonOrder, String payway, double paidPrice, String memberCard) throws DataCheckException;
 	ObjectListResult queryIndent(int start, int limit, String sstarttime, String sendtime, String payway, String member, String indentCode, Integer[] types, String orderby, String orderbydesc);
-	ObjectResult printIndent(int userId, int indentId);
 	ObjectListResult queryPrebuyIndent(int start, int limit, String sstarttime, String sendtime, String member);
 	ObjectListResult queryGoodsSoldRecord(int goodsId, String sstarttime, String sendtime, String payway, String member);
 	ObjectListResult queryIndentForShiftwork(int shiftworkId);

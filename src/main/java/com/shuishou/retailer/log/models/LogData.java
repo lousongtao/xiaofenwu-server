@@ -17,6 +17,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.shuishou.retailer.ConstantValue;
 
 /**
  * @author zhing the log data.
@@ -91,7 +92,7 @@ public class LogData {
 	/**
 	 * the time.
 	 */
-	@JsonFormat(pattern="yyyy/MM/dd HH:mm:ss", timezone = "GMT+8:00")
+	@JsonFormat(pattern=ConstantValue.DATE_PATTERN_YMDHMS, timezone = "GMT+8:00")
 	@Column(name = "time", nullable = false)
 	private Date time = new Date();
 

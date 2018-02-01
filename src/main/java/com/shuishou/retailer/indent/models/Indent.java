@@ -14,12 +14,14 @@ import javax.persistence.Index;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.shuishou.retailer.ConstantValue;
 
 @Entity
@@ -33,7 +35,7 @@ public class Indent {
 	@Column(nullable = false, unique = true)
 	private int id;
 	
-	@JsonFormat(pattern="yyyy/MM/dd HH:mm:ss", timezone="GMT+8:00")
+	@JsonFormat(pattern=ConstantValue.DATE_PATTERN_YMDHMS, timezone="GMT+8:00")
 	@Column(nullable = false)
 	private Date createTime;
 	
@@ -57,6 +59,10 @@ public class Indent {
 	
 	@Column
 	private String operator;//操作人
+	
+	@JsonIgnore
+	@OneToOne
+	private Indent originIndent;//record the original order if this order is from preorder
 	
 	/**
 	 * 区分 普通订单, 预购单, 退款单
@@ -122,6 +128,14 @@ public class Indent {
 		this.memberCard = memberCard;
 	}
 
+
+	public Indent getOriginIndent() {
+		return originIndent;
+	}
+
+	public void setOriginIndent(Indent originIndent) {
+		this.originIndent = originIndent;
+	}
 
 	public double getPaidPrice() {
 		return paidPrice;

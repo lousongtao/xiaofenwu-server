@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.shuishou.retailer.ConstantValue;
 import com.shuishou.retailer.DataCheckException;
+import com.shuishou.retailer.ServerProperties;
 import com.shuishou.retailer.account.models.IUserDataAccessor;
 import com.shuishou.retailer.account.models.UserData;
 import com.shuishou.retailer.common.models.Configs;
@@ -53,6 +54,8 @@ import com.shuishou.retailer.member.models.IMemberScoreDataAccessor;
 import com.shuishou.retailer.member.models.Member;
 import com.shuishou.retailer.member.models.MemberConsumption;
 import com.shuishou.retailer.member.models.MemberScore;
+import com.shuishou.retailer.member.services.IMemberCloudService;
+import com.shuishou.retailer.member.services.IMemberService;
 import com.shuishou.retailer.views.ObjectListResult;
 import com.shuishou.retailer.views.ObjectResult;
 import com.shuishou.retailer.views.Result;
@@ -67,9 +70,6 @@ public class IndentService implements IIndentService {
 	private ILogService logService;
 	
 	@Autowired
-	private IConfigsDataAccessor configsDA;
-	
-	@Autowired
 	private IUserDataAccessor userDA;
 
 	@Autowired
@@ -82,19 +82,16 @@ public class IndentService implements IIndentService {
 	private IIndentDetailDataAccessor indentDetailDA;
 	
 	@Autowired
-	private IMemberDataAccessor memberDA;
-	
-	@Autowired
-	private IMemberScoreDataAccessor memberScoreDA;
-	
-	@Autowired
-	private IMemberConsumptionDataAccessor memberConsumptionDA;
-	
-	@Autowired
 	private IPackageBindDataAccessor packageBindDA;
 	
 	@Autowired
 	private IShiftWorkDataAccessor shiftworkDA;
+	
+	@Autowired
+	private IMemberService memberService;
+	
+	@Autowired
+	private IMemberCloudService memberCloudService;
 	
 	
 	private DecimalFormat doubleFormat = new DecimalFormat("0.00");
@@ -102,13 +99,7 @@ public class IndentService implements IIndentService {
 	@Override
 	@Transactional(rollbackFor=DataCheckException.class)
 	public synchronized ObjectResult saveIndent(int userId, JSONArray jsonOrder, String payWay, double paidPrice, String memberCard) throws DataCheckException {
-		Member member = null;
-		if (memberCard != null && memberCard.length() > 0){
-			member = memberDA.getMemberByCard(memberCard);
-			if (member == null){
-				return new ObjectResult("cannot find member by card " + memberCard, false);
-			}
-		}
+		
 		UserData selfUser = userDA.getUserById(userId);
 		
 		double totalprice = 0;
@@ -145,9 +136,13 @@ public class IndentService implements IIndentService {
 		indent.setIndentType(ConstantValue.INDENT_TYPE_ORDER);
 		indent.setOperator(selfUser.getUsername());
 		indentDA.save(indent);
-		if (member != null){
-			recordMemberScore(member, paidPrice);
-			recordMemberConsumption(member, paidPrice);
+		
+		if (memberCard != null && memberCard.length() > 0){
+			if (ServerProperties.MEMBERLOCATION_LOCAL.equals(ServerProperties.MEMBERLOCATION)){
+				memberService.recordMemberConsumption(memberCard, paidPrice);
+			} else {
+				memberCloudService.recordMemberConsumption(memberCard, paidPrice);
+			}
 		}
 		
 		
@@ -304,16 +299,9 @@ public class IndentService implements IIndentService {
 		if (preindent == null){
 			return new ObjectResult("cannot find indent by id "+preindentId, false);
 		}
-		Member member = null;
-		if (preindent.getMemberCard() != null &&preindent.getMemberCard().length() > 0){
-			member = memberDA.getMemberByCard(preindent.getMemberCard());
-			if (member == null)
-				return new ObjectResult("cannot find member by card " + preindent.getMemberCard(), false);
-		}
 		UserData selfUser = userDA.getUserById(userId);
 		Indent indent = new Indent();
 		Date date = new Date();
-		indent.setIndentType(ConstantValue.INDENT_TYPE_ORDER);
 		indent.setCreateTime(date);
 		indent.setOperator(selfUser.getUsername());
 		indent.setIndentCode(ConstantValue.DFYMDHMS_2.format(date));
@@ -321,7 +309,8 @@ public class IndentService implements IIndentService {
 		indent.setPaidPrice(preindent.getPaidPrice());
 		indent.setTotalPrice(preindent.getTotalPrice());
 		indent.setPayWay(preindent.getPayWay());
-		indent.setIndentType(ConstantValue.INDENT_TYPE_ORDER);
+		indent.setIndentType(ConstantValue.INDENT_TYPE_ORDER_FROMPREBUY);
+		indent.setOriginIndent(preindent);
 		
 		List<IndentDetail> predetails = preindent.getItems();
 		for (int i = 0; i < predetails.size(); i++) {
@@ -345,11 +334,15 @@ public class IndentService implements IIndentService {
 		indentDA.save(indent);
 		preindent.setIndentType(ConstantValue.INDENT_TYPE_PREBUY_FINISHED);
 		indentDA.save(preindent);
-		if (member != null){
-			double paidPrice = indent.getPaidPrice();
-			recordMemberScore(member, paidPrice);
-			recordMemberConsumption(member, paidPrice);
+		
+		if (preindent.getMemberCard() != null && preindent.getMemberCard().length() > 0){
+			if (ServerProperties.MEMBERLOCATION_LOCAL.equals(ServerProperties.MEMBERLOCATION)){
+				memberService.recordMemberConsumption(preindent.getMemberCard(), indent.getPaidPrice());
+			} else {
+				memberCloudService.recordMemberConsumption(preindent.getMemberCard(), indent.getPaidPrice());
+			}
 		}
+		
 		Hibernate.initialize(indent);
 		Hibernate.initialize(indent.getItems());
 		
@@ -372,21 +365,8 @@ public class IndentService implements IIndentService {
 	}
 	
 	@Override
-	public ObjectResult printIndent(int userId, int indentId) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	@Transactional(rollbackFor=DataCheckException.class)
 	public ObjectResult refundIndent(int userId, JSONArray jsonOrder, String memberCard, boolean returnToStorage) throws DataCheckException {
-		Member member = null;
-		if (memberCard != null && memberCard.length() > 0){
-			member = memberDA.getMemberByCard(memberCard);
-			if (member == null){
-				return new ObjectResult("cannot find member by card " + memberCard, false);
-			}
-		}
 		UserData selfUser = userDA.getUserById(userId);
 		double totalprice = 0;
 		double totalSoldPrice = 0;
@@ -423,12 +403,12 @@ public class IndentService implements IIndentService {
 		indent.setMemberCard(memberCard);
 		indent.setIndentType(ConstantValue.INDENT_TYPE_REFUND);
 		indentDA.save(indent);
-		if (member != null){
-			recordMemberScore(member, totalSoldPrice * (-1));
-			try {
-				recordMemberConsumption(member, totalSoldPrice * (-1));
-			} catch (DataCheckException e) {
-				logger.error("", e);
+		
+		if (memberCard != null && memberCard.length() > 0){
+			if (ServerProperties.MEMBERLOCATION_LOCAL.equals(ServerProperties.MEMBERLOCATION)){
+				memberService.recordMemberConsumption(memberCard, totalSoldPrice * (-1));
+			} else {
+				memberCloudService.recordMemberConsumption(memberCard, totalSoldPrice * (-1));
 			}
 		}
 		
@@ -438,65 +418,6 @@ public class IndentService implements IIndentService {
 		return new ObjectResult(Result.OK, true, indent);
 	}
 	
-	@Transactional
-	private void recordMemberScore(Member member, double amount){
-		Date time = new Date();
-		boolean byScore = false;
-		double scorePerDollar = 0;
-		String branchName = "";
-		List<Configs> configs = configsDA.queryConfigs();
-		for(Configs config : configs){
-			if (ConstantValue.CONFIGS_MEMBERMGR_BYSCORE.equals(config.getName())){
-				byScore = Boolean.valueOf(config.getValue());
-			} else if (ConstantValue.CONFIGS_MEMBERMGR_SCOREPERDOLLAR.equals(config.getName())){
-				scorePerDollar = Double.parseDouble(config.getValue());
-			} else if (ConstantValue.CONFIGS_BRANCHNAME.equals(config.getName())){
-				branchName = config.getValue();
-			}
-		}
-		if (byScore && scorePerDollar > 0){
-			MemberScore ms = new MemberScore();
-			ms.setDate(time);
-			ms.setAmount(scorePerDollar * amount);
-			ms.setPlace(branchName);
-			ms.setType(ConstantValue.MEMBERSCORE_REFUND);
-			ms.setMember(member);
-			memberScoreDA.save(ms);
-			member.setScore(member.getScore() + ms.getAmount());
-			member.setLastModifyTime(time);
-			memberDA.save(member);
-		}
-	}
-	
-	@Transactional
-	private void recordMemberConsumption(Member member, double amount) throws DataCheckException{
-		Date time = new Date();
-		boolean byDeposit = false;
-		String branchName = "";
-		List<Configs> configs = configsDA.queryConfigs();
-		for(Configs config : configs){
-			if (ConstantValue.CONFIGS_MEMBERMGR_BYDEPOSIT.equals(config.getName())){
-				byDeposit = Boolean.valueOf(config.getValue());
-			} else if (ConstantValue.CONFIGS_BRANCHNAME.equals(config.getName())){
-				branchName = config.getValue();
-			}
-		}
-		if (byDeposit){
-			if (member.getBalanceMoney() < amount){
-				throw new DataCheckException("Meber's balance is not enought to pay");
-			}
-			MemberConsumption mc = new MemberConsumption();
-			mc.setAmount(amount);
-			mc.setDate(time);
-			mc.setMember(member);
-			mc.setPlace(branchName);
-			mc.setType(ConstantValue.MEMBERDEPOSIT_REFUND);
-			memberConsumptionDA.save(mc);
-			member.setBalanceMoney(member.getBalanceMoney() - amount);
-			member.setLastModifyTime(time);
-			memberDA.save(member);
-		}
-	}
 
 	/**
 	 * 预售单
@@ -507,13 +428,6 @@ public class IndentService implements IIndentService {
 	@Transactional
 	public ObjectResult prebuyIndent(int userId, JSONArray jsonOrder, String payWay, double paidPrice,
 			String memberCard, boolean paid) {
-		Member member = null;
-		if (memberCard != null && memberCard.length() > 0){
-			member = memberDA.getMemberByCard(memberCard);
-			if (member == null){
-				return new ObjectResult("cannot find member by card " + memberCard, false);
-			}
-		}
 		UserData selfUser = userDA.getUserById(userId);
 		double totalprice = 0;
 		Indent indent = new Indent();

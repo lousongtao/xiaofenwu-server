@@ -8,14 +8,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.shuishou.retailer.ConstantValue;
+import com.shuishou.retailer.DataCheckException;
 import com.shuishou.retailer.account.models.IUserDataAccessor;
 import com.shuishou.retailer.account.models.UserData;
+import com.shuishou.retailer.common.models.Configs;
+import com.shuishou.retailer.common.models.IConfigsDataAccessor;
 import com.shuishou.retailer.log.models.LogData;
 import com.shuishou.retailer.log.services.ILogService;
 import com.shuishou.retailer.member.models.IMemberConsumptionDataAccessor;
 import com.shuishou.retailer.member.models.IMemberDataAccessor;
 import com.shuishou.retailer.member.models.IMemberScoreDataAccessor;
 import com.shuishou.retailer.member.models.Member;
+import com.shuishou.retailer.member.models.MemberConsumption;
+import com.shuishou.retailer.member.models.MemberScore;
 import com.shuishou.retailer.views.ObjectListResult;
 import com.shuishou.retailer.views.ObjectResult;
 import com.shuishou.retailer.views.Result;
@@ -31,6 +36,9 @@ public class MemberService implements IMemberService{
 	
 	@Autowired
 	private IMemberScoreDataAccessor memberScoreDA;
+	
+	@Autowired
+	private IConfigsDataAccessor configsDA;
 	
 	@Autowired
 	private ILogService logService;
@@ -118,7 +126,25 @@ public class MemberService implements IMemberService{
 		memberDA.save(m);
 		UserData selfUser = userDA.getUserById(userId);
 		
-		logService.write(selfUser, LogData.LogType.MEMBER_CHANGE.toString(), "User " + selfUser + " update member score "+ oldBalance +" to " + newBalance);
+		logService.write(selfUser, LogData.LogType.MEMBER_CHANGE.toString(), "User " + selfUser + " update member balance "+ oldBalance +" to " + newBalance);
+		return new ObjectResult(Result.OK, true, m);
+	}
+	
+	@Override
+	@Transactional
+	public ObjectResult memberRecharge(int userId, int id, double rechargeValue) {
+		Member m = memberDA.getMemberById(id);
+		
+		if (m == null)
+			return new ObjectResult("cannot find member by id "+ id, false, null);
+		
+		double oldBalance = m.getBalanceMoney();
+		m.setBalanceMoney(m.getBalanceMoney() + rechargeValue);
+		m.setLastModifyTime(new Date());
+		memberDA.save(m);
+		UserData selfUser = userDA.getUserById(userId);
+		
+		logService.write(selfUser, LogData.LogType.MEMBER_CHANGE.toString(), "User " + selfUser + " recharge member. old balance = "+ oldBalance +", recharge to " + m.getBalanceMoney());
 		return new ObjectResult(Result.OK, true, m);
 	}
 
@@ -170,6 +196,67 @@ public class MemberService implements IMemberService{
 	public ObjectListResult queryScore(int userId, int id) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	@Transactional
+	public ObjectResult recordMemberConsumption(String memberCard, double consumptionPrice) throws DataCheckException {
+		Member member = memberDA.getMemberByCard(memberCard);
+		if (member == null){
+			throw new DataCheckException("cannot find member by card " + memberCard);
+		}
+		Date time = new Date();
+		boolean byScore = false;
+		double scorePerDollar = 0;
+		boolean byDeposit = false;
+		String branchName = "";
+		List<Configs> configs = configsDA.queryConfigs();
+		for(Configs config : configs){
+			if (ConstantValue.CONFIGS_MEMBERMGR_BYSCORE.equals(config.getName())){
+				byScore = Boolean.valueOf(config.getValue());
+			} else if (ConstantValue.CONFIGS_MEMBERMGR_SCOREPERDOLLAR.equals(config.getName())){
+				scorePerDollar = Double.parseDouble(config.getValue());
+			} else if (ConstantValue.CONFIGS_BRANCHNAME.equals(config.getName())){
+				branchName = config.getValue();
+			} else if (ConstantValue.CONFIGS_MEMBERMGR_BYDEPOSIT.equals(config.getName())){
+				byDeposit = Boolean.valueOf(config.getValue());
+			} 
+		}
+		if (byScore && scorePerDollar > 0){
+			MemberScore ms = new MemberScore();
+			ms.setDate(time);
+			ms.setAmount(scorePerDollar * consumptionPrice);
+			ms.setPlace(branchName);
+			if (consumptionPrice > 0)
+				ms.setType(ConstantValue.MEMBERSCORE_CONSUM);
+			else 
+				ms.setType(ConstantValue.MEMBERSCORE_REFUND);
+			ms.setMember(member);
+			memberScoreDA.save(ms);
+			member.setScore(member.getScore() + ms.getAmount());
+			member.setLastModifyTime(time);
+			memberDA.save(member);
+		}
+		if (byDeposit){
+			if (member.getBalanceMoney() < consumptionPrice){
+				throw new DataCheckException("Meber's balance is not enought to pay");
+			}
+			MemberConsumption mc = new MemberConsumption();
+			mc.setAmount(consumptionPrice);
+			mc.setDate(time);
+			mc.setMember(member);
+			mc.setPlace(branchName);
+			if (consumptionPrice > 0)
+				mc.setType(ConstantValue.MEMBERDEPOSIT_CONSUM);
+			else 
+				mc.setType(ConstantValue.MEMBERDEPOSIT_REFUND);
+			
+			memberConsumptionDA.save(mc);
+			member.setBalanceMoney(member.getBalanceMoney() - consumptionPrice);
+			member.setLastModifyTime(time);
+			memberDA.save(member);
+		}
+		return new ObjectResult(Result.OK, true);
 	}
 
 }

@@ -6,7 +6,7 @@ import com.shuishou.retailer.DataCheckException;
 import com.shuishou.retailer.views.ObjectListResult;
 import com.shuishou.retailer.views.ObjectResult;
 
-public interface IMemberService {
+public interface IMemberCloudService {
 
 	ObjectResult addMember(int userId, String name, String memberCard, String address, String postCode, String telephone, Date birth, double discountRate);
 	ObjectResult updateMember(int userId, int id, String name, String memberCard, String address, String postCode, String telephone, Date birth,double discountRate);
@@ -17,9 +17,4 @@ public interface IMemberService {
 	ObjectResult recordMemberConsumption(String memberCard, double consumptionPrice) throws DataCheckException;
 	ObjectListResult queryMember(String name, String memberCard, String address, String postCode, String telephone);
 	ObjectListResult queryAllMember();
-	ObjectListResult queryPurchase(int userId, int id);
-	ObjectListResult queryRecharge(int userId, int id);
-	ObjectListResult queryScore(int userId, int id);
-	
-	
 }
