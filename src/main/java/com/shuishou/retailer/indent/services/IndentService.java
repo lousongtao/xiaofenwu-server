@@ -151,6 +151,61 @@ public class IndentService implements IIndentService {
 		return new ObjectResult(Result.OK, true, indent);
 	}
 	
+	@Override
+	@Transactional(rollbackFor=DataCheckException.class)
+	public ObjectResult refundIndent(int userId, JSONArray jsonOrder, String memberCard, double paidPrice, boolean returnToStorage, String payWay) throws DataCheckException {
+		UserData selfUser = userDA.getUserById(userId);
+		double totalprice = 0;
+		double totalSoldPrice = 0;
+		Indent indent = new Indent();
+		Calendar c = Calendar.getInstance();
+		indent.setCreateTime(c.getTime());
+		indent.setIndentCode(ConstantValue.DFYMDHMS_2.format(c.getTime()));
+		indent.setOperator(selfUser.getUsername());
+		for(int i = 0; i< jsonOrder.length(); i++){
+			JSONObject o = (JSONObject) jsonOrder.get(i);
+			int goodsid = o.getInt("id");
+			int amount = o.getInt("amount");
+			double soldPrice = o.getDouble("soldPrice");
+			Goods goods = goodsDA.getGoodsById(goodsid);
+			if (goods == null){
+				throw new DataCheckException("cannot find goods by id "+ goodsid);
+			}
+			IndentDetail detail = new IndentDetail();
+			detail.setIndent(indent);
+			detail.setGoodsId(goodsid);
+			detail.setAmount(amount);
+			detail.setGoodsName(goods.getName());
+			detail.setGoodsPrice(goods.getSellPrice());
+			detail.setSoldPrice(soldPrice);
+			indent.addItem(detail);
+			totalSoldPrice += soldPrice;
+			totalprice += goods.getSellPrice() * amount;
+			if (returnToStorage){
+				changeGoodsLeftAmount(goods, amount * (-1));
+			}
+		}
+		indent.setTotalPrice(totalprice);
+		indent.setPaidPrice(paidPrice);
+		indent.setMemberCard(memberCard);
+		indent.setPayWay(payWay);
+		indent.setIndentType(ConstantValue.INDENT_TYPE_REFUND);
+		indentDA.save(indent);
+		
+		if (memberCard != null && memberCard.length() > 0){
+			if (ServerProperties.MEMBERLOCATION_LOCAL.equals(ServerProperties.MEMBERLOCATION)){
+				memberService.recordMemberConsumption(memberCard, paidPrice);
+			} else {
+				memberCloudService.recordMemberConsumption(memberCard, paidPrice);
+			}
+		}
+		
+		
+		logService.write(selfUser, LogData.LogType.INDENT_MAKE.toString(), "User " + selfUser + " make refund order : " + indent.getId());
+		
+		return new ObjectResult(Result.OK, true, indent);
+	}
+	
 	/**
 	 * 1. goods.leftamount >= amount: reduce the amount from the goods' leftamount;
 	 * 2. goods.leftamount < amount: look for if there is existing package bind, if yes, reduce from the big package; if no, reduce amount from the goods
@@ -328,7 +383,7 @@ public class IndentService implements IIndentService {
 			detail.setGoodsPrice(predetail.getGoodsPrice());
 			detail.setSoldPrice(predetail.getSoldPrice());
 			detail.setIndent(indent);
-			indentDetailDA.save(detail);
+//			indentDetailDA.save(detail);
 			indent.addItem(detail);
 		}
 		indentDA.save(indent);
@@ -364,59 +419,7 @@ public class IndentService implements IIndentService {
 		return new ObjectResult(Result.OK, true, indent);
 	}
 	
-	@Override
-	@Transactional(rollbackFor=DataCheckException.class)
-	public ObjectResult refundIndent(int userId, JSONArray jsonOrder, String memberCard, boolean returnToStorage) throws DataCheckException {
-		UserData selfUser = userDA.getUserById(userId);
-		double totalprice = 0;
-		double totalSoldPrice = 0;
-		Indent indent = new Indent();
-		Calendar c = Calendar.getInstance();
-		indent.setCreateTime(c.getTime());
-		indent.setIndentCode(ConstantValue.DFYMDHMS_2.format(c.getTime()));
-		indent.setOperator(selfUser.getUsername());
-		for(int i = 0; i< jsonOrder.length(); i++){
-			JSONObject o = (JSONObject) jsonOrder.get(i);
-			int goodsid = o.getInt("id");
-			int amount = o.getInt("amount");
-			double soldPrice = o.getDouble("soldPrice");
-			Goods goods = goodsDA.getGoodsById(goodsid);
-			if (goods == null){
-				throw new DataCheckException("cannot find goods by id "+ goodsid);
-			}
-			IndentDetail detail = new IndentDetail();
-			detail.setIndent(indent);
-			detail.setGoodsId(goodsid);
-			detail.setAmount(amount);
-			detail.setGoodsName(goods.getName());
-			detail.setGoodsPrice(goods.getSellPrice());
-			detail.setSoldPrice(soldPrice);
-			indent.addItem(detail);
-			totalSoldPrice += soldPrice;
-			totalprice += goods.getSellPrice() * amount;
-			if (returnToStorage){
-				changeGoodsLeftAmount(goods, amount * (-1));
-			}
-		}
-		indent.setTotalPrice(totalprice);
-		indent.setPaidPrice(totalSoldPrice);
-		indent.setMemberCard(memberCard);
-		indent.setIndentType(ConstantValue.INDENT_TYPE_REFUND);
-		indentDA.save(indent);
-		
-		if (memberCard != null && memberCard.length() > 0){
-			if (ServerProperties.MEMBERLOCATION_LOCAL.equals(ServerProperties.MEMBERLOCATION)){
-				memberService.recordMemberConsumption(memberCard, totalSoldPrice * (-1));
-			} else {
-				memberCloudService.recordMemberConsumption(memberCard, totalSoldPrice * (-1));
-			}
-		}
-		
-		
-		logService.write(selfUser, LogData.LogType.INDENT_MAKE.toString(), "User " + selfUser + " make refund order : " + indent.getId());
-		
-		return new ObjectResult(Result.OK, true, indent);
-	}
+	
 	
 
 	/**

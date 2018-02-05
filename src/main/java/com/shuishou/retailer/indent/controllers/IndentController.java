@@ -53,12 +53,13 @@ public class IndentController extends BaseController {
 	public @ResponseBody ObjectResult refundOrder(
 			@RequestParam(value = "userId", required = true) int userId,
 			@RequestParam(value="indents", required = true) String indents,
-//			@RequestParam(value="refundPrice", required = true) double refundPrice,
+			@RequestParam(value="payWay", required = true) String payWay,
+			@RequestParam(value="paidPrice", required = true) double paidPrice, //a negative value for refund
 			@RequestParam(value="returnToStorage", required = true) boolean returnToStorage,
 			@RequestParam(value="member", required = false, defaultValue = "") String member) throws Exception{
 		JSONArray jsonOrder = new JSONArray(indents);
 		try{
-			return indentService.refundIndent(userId, jsonOrder, member, returnToStorage);
+			return indentService.refundIndent(userId, jsonOrder, member, paidPrice, returnToStorage, payWay);
 		} catch(DataCheckException ex){
 			return new ObjectResult(ex.getMessage(), false);
 		}

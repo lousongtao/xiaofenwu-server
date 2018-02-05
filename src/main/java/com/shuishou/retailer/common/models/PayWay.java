@@ -27,6 +27,10 @@ public class PayWay {
 	@Column(nullable = false)
 	private int sequence;
 	
+	@Column(nullable = false)
+	private String symbol;
+	
+	
 	public PayWay(){}
 	
 	public PayWay(int id, String name){
@@ -65,6 +69,14 @@ public class PayWay {
 
 	public void setRate(double rate) {
 		this.rate = rate;
+	}
+
+	public String getSymbol() {
+		return symbol;
+	}
+
+	public void setSymbol(String symbol) {
+		this.symbol = symbol;
 	}
 
 	@Override

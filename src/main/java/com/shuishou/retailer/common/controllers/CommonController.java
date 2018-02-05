@@ -111,25 +111,27 @@ public class CommonController extends BaseController {
 	public @ResponseBody Result addPayWay(
 			@RequestParam(value = "userId", required = true) int userId,
 			@RequestParam(value = "rate", required = true) double rate,
+			@RequestParam(value = "symbol", required = true) String symbol,
 			@RequestParam(value = "sequence", required = true) int sequence,
 			@RequestParam(value="name", required = true) String name) throws Exception{
 		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_UPDATE_PAYWAY)){
 			return new Result("no_permission");
 		}
-		return commonService.addPayWay(userId, name, rate, sequence);
+		return commonService.addPayWay(userId, name, rate, sequence, symbol);
 	}
 	
 	@RequestMapping(value="/common/updatepayway", method =  {RequestMethod.POST, RequestMethod.GET})
-	public @ResponseBody Result addPayWay(
+	public @ResponseBody Result updatePayWay(
 			@RequestParam(value = "userId", required = true) int userId,
 			@RequestParam(value = "id", required = true) int id,
 			@RequestParam(value = "sequence", required = true) int sequence,
+			@RequestParam(value = "symbol", required = true) String symbol,
 			@RequestParam(value = "rate", required = true) double rate,
 			@RequestParam(value="name", required = true) String name) throws Exception{
 		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_UPDATE_PAYWAY)){
 			return new Result("no_permission");
 		}
-		return commonService.updatePayWay(userId, id, name, rate, sequence);
+		return commonService.updatePayWay(userId, id, name, rate, sequence, symbol);
 	}
 	
 	@RequestMapping(value="/common/deletepayway", method = {RequestMethod.POST, RequestMethod.GET})

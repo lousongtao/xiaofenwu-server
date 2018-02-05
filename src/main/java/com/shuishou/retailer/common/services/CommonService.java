@@ -236,11 +236,12 @@ public class CommonService implements ICommonService {
 
 	@Override
 	@Transactional
-	public ObjectResult addPayWay(int userId, String name, double rate, int sequence) {
+	public ObjectResult addPayWay(int userId, String name, double rate, int sequence, String symbol) {
 		PayWay payWay = new PayWay();
 		payWay.setName(name);
 		payWay.setRate(rate);
 		payWay.setSequence(sequence);
+		payWay.setSymbol(symbol);
 		payWayDA.insertPayWay(payWay);
 		
 		// write log.
@@ -253,7 +254,7 @@ public class CommonService implements ICommonService {
 
 	@Override
 	@Transactional
-	public ObjectResult updatePayWay(int userId, int id, String name, double rate, int sequence) {
+	public ObjectResult updatePayWay(int userId, int id, String name, double rate, int sequence, String symbol) {
 		
 		PayWay payWay = payWayDA.getPayWayById(id);
 		if (payWay == null){
@@ -262,6 +263,7 @@ public class CommonService implements ICommonService {
 		payWay.setName(name);
 		payWay.setRate(rate);
 		payWay.setSequence(sequence);
+		payWay.setSymbol(symbol);
 		payWayDA.updatePayWay(payWay);
 		
 		// write log.

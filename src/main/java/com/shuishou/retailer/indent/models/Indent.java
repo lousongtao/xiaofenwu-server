@@ -61,7 +61,7 @@ public class Indent {
 	private String operator;//操作人
 	
 	@JsonIgnore
-	@OneToOne
+	@OneToOne(cascade=CascadeType.ALL)
 	private Indent originIndent;//record the original order if this order is from preorder
 	
 	/**

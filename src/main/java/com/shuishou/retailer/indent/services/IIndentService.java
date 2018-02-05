@@ -17,6 +17,6 @@ public interface IIndentService {
 	ObjectListResult queryIndentForShiftwork(int shiftworkId);
 	ObjectResult changePreOrderToOrder(int userId, int indentId) throws DataCheckException;
 	ObjectResult deletePreOrder(int userId, int indentId);
-	ObjectResult refundIndent(int userId, JSONArray jsonOrder, String memberCard, boolean returnToStorage) throws DataCheckException;
+	ObjectResult refundIndent(int userId, JSONArray jsonOrder, String memberCard, double paidPrice, boolean returnToStorage, String payWay) throws DataCheckException;
 	ObjectResult prebuyIndent(int userId, JSONArray jsonOrder, String payway, double paidPrice, String memberCard, boolean paid);
 }
