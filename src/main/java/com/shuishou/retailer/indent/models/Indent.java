@@ -65,12 +65,26 @@ public class Indent {
 	private Indent originIndent;//record the original order if this order is from preorder
 	
 	/**
+	 * 调整的价格, 有时候直接给客人折扣个零头, 或者打个折, 导致indentdetail中各项相加跟实际付款价格不一致. 用这个字段记录
+	 */
+	@Column
+	private double adjustPrice;
+	
+	/**
 	 * 区分 普通订单, 预购单, 退款单
 	 */
 	@Column(nullable = false, columnDefinition="int default("+ConstantValue.INDENT_TYPE_ORDER+")")
 	private int indentType;
 	
 	
+
+	public double getAdjustPrice() {
+		return adjustPrice;
+	}
+
+	public void setAdjustPrice(double adjustPrice) {
+		this.adjustPrice = adjustPrice;
+	}
 
 	public String getOperator() {
 		return operator;

@@ -98,7 +98,7 @@ public class IndentService implements IIndentService {
 	
 	@Override
 	@Transactional(rollbackFor=DataCheckException.class)
-	public synchronized ObjectResult saveIndent(int userId, JSONArray jsonOrder, String payWay, double paidPrice, String memberCard) throws DataCheckException {
+	public synchronized ObjectResult saveIndent(int userId, JSONArray jsonOrder, String payWay, double paidPrice, double adjustPrice,String memberCard) throws DataCheckException {
 		
 		UserData selfUser = userDA.getUserById(userId);
 		
@@ -131,6 +131,7 @@ public class IndentService implements IIndentService {
 		}
 		indent.setTotalPrice(totalprice);
 		indent.setPaidPrice(paidPrice);
+		indent.setAdjustPrice(adjustPrice);
 		indent.setMemberCard(memberCard);
 		indent.setPayWay(payWay);
 		indent.setIndentType(ConstantValue.INDENT_TYPE_ORDER);
@@ -153,7 +154,7 @@ public class IndentService implements IIndentService {
 	
 	@Override
 	@Transactional(rollbackFor=DataCheckException.class)
-	public ObjectResult refundIndent(int userId, JSONArray jsonOrder, String memberCard, double paidPrice, boolean returnToStorage, String payWay) throws DataCheckException {
+	public ObjectResult refundIndent(int userId, JSONArray jsonOrder, String memberCard, double paidPrice, double adjustPrice, boolean returnToStorage, String payWay) throws DataCheckException {
 		UserData selfUser = userDA.getUserById(userId);
 		double totalprice = 0;
 		double totalSoldPrice = 0;
@@ -187,6 +188,7 @@ public class IndentService implements IIndentService {
 		}
 		indent.setTotalPrice(totalprice);
 		indent.setPaidPrice(paidPrice);
+		indent.setAdjustPrice(adjustPrice);
 		indent.setMemberCard(memberCard);
 		indent.setPayWay(payWay);
 		indent.setIndentType(ConstantValue.INDENT_TYPE_REFUND);
@@ -429,7 +431,7 @@ public class IndentService implements IIndentService {
 	 */
 	@Override
 	@Transactional
-	public ObjectResult prebuyIndent(int userId, JSONArray jsonOrder, String payWay, double paidPrice,
+	public ObjectResult prebuyIndent(int userId, JSONArray jsonOrder, String payWay, double paidPrice, double adjustPrice,
 			String memberCard, boolean paid) {
 		UserData selfUser = userDA.getUserById(userId);
 		double totalprice = 0;
@@ -459,6 +461,7 @@ public class IndentService implements IIndentService {
 		}
 		indent.setTotalPrice(totalprice);
 		indent.setPaidPrice(paidPrice);
+		indent.setAdjustPrice(adjustPrice);
 		indent.setMemberCard(memberCard);
 		indent.setPayWay(payWay);
 		if (paid)

@@ -122,6 +122,16 @@ public class GoodsController extends BaseController {
 		return goodsService.deleteCategory2(userId, id);
 	}
 	
+	@RequestMapping(value = "/goods/delete_goods", method = (RequestMethod.POST))
+	public @ResponseBody Result deleteGoods(
+			@RequestParam(value="userId", required = true) int userId, 
+			@RequestParam(value = "id", required = true) int id) throws Exception{
+		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_UPDATE_GOODS)){
+			return new Result("no_permission");
+		}
+		return goodsService.deleteGoods(userId, id);
+	}
+	
 	@RequestMapping(value="/goods/add_goods", method = {RequestMethod.POST})
 	public @ResponseBody Result addGoods(
 			@RequestParam(value="userId", required = true) int userId, 

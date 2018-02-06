@@ -33,13 +33,16 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import org.apache.log4j.Logger;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 
-public class MainFrameImportGoods extends JFrame {
+import com.shuishou.retailer.BaseController;
 
+public class MainFrameImportGoods extends JFrame {
+	private Logger logger = Logger.getLogger(MainFrameImportGoods.class);
 	private JTextField tfFileName = new JTextField();
 	private JFileChooser fc = new JFileChooser();
 	private JButton btnSubmit = new JButton("Submit");
@@ -65,12 +68,12 @@ public class MainFrameImportGoods extends JFrame {
 			conn = DriverManager.getConnection(ps.getProperty("db"), ps.getProperty("username"), ps.getProperty("password"));
 			stmt = conn.createStatement();
 			for (int i = 0; i < sqls.size(); i++) {
-				System.out.println(sqls.get(i));
+				logger.debug(sqls.get(i));
 				stmt.execute(sqls.get(i));
 				lbStatus.setText("execute " + (i+1) + "/" + sqls.size() +" sentences...");
 			}
 		} catch (Exception e1) {
-			throw e1;
+			logger.error("", e1);
 		} finally{
 			try {
 				if (reader != null)
@@ -142,6 +145,7 @@ public class MainFrameImportGoods extends JFrame {
 		if (fc.getSelectedFile() == null)
 			return;
 		sqls.clear();
+		sqls.add("delete from packagebind;");
 		sqls.add("delete from goods;");
 		Workbook wb = null;
 		try {

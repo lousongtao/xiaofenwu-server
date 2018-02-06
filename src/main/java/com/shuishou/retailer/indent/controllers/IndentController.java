@@ -39,10 +39,11 @@ public class IndentController extends BaseController {
 			@RequestParam(value="indents", required = true) String indents,
 			@RequestParam(value="payWay", required = true) String payWay,
 			@RequestParam(value="paidPrice", required = true) double paidPrice,
+			@RequestParam(value="adjustPrice", required = false, defaultValue="0") double adjustPrice,
 			@RequestParam(value="member", required = false, defaultValue = "") String member) throws Exception{
 		JSONArray jsonOrder = new JSONArray(indents);
 		try{
-			ObjectResult result = indentService.saveIndent(userId, jsonOrder, payWay, paidPrice, member);
+			ObjectResult result = indentService.saveIndent(userId, jsonOrder, payWay, paidPrice, adjustPrice,member);
 			return result;
 		} catch(DataCheckException ex){
 			return new ObjectResult(ex.getMessage(), false);
@@ -55,11 +56,12 @@ public class IndentController extends BaseController {
 			@RequestParam(value="indents", required = true) String indents,
 			@RequestParam(value="payWay", required = true) String payWay,
 			@RequestParam(value="paidPrice", required = true) double paidPrice, //a negative value for refund
+			@RequestParam(value="adjustPrice", required = false, defaultValue="0") double adjustPrice,
 			@RequestParam(value="returnToStorage", required = true) boolean returnToStorage,
 			@RequestParam(value="member", required = false, defaultValue = "") String member) throws Exception{
 		JSONArray jsonOrder = new JSONArray(indents);
 		try{
-			return indentService.refundIndent(userId, jsonOrder, member, paidPrice, returnToStorage, payWay);
+			return indentService.refundIndent(userId, jsonOrder, member, paidPrice, adjustPrice, returnToStorage, payWay);
 		} catch(DataCheckException ex){
 			return new ObjectResult(ex.getMessage(), false);
 		}
@@ -71,11 +73,12 @@ public class IndentController extends BaseController {
 			@RequestParam(value="indents", required = true) String indents,
 			@RequestParam(value="payWay", required = false, defaultValue = "") String payWay,
 			@RequestParam(value="paidPrice", required = true) double paidPrice,
+			@RequestParam(value="adjustPrice", required = false, defaultValue="0") double adjustPrice,
 			@RequestParam(value="paid", required = true) boolean paid,
 			@RequestParam(value="member", required = false, defaultValue = "") String member) throws Exception{
 		JSONArray jsonOrder = new JSONArray(indents);
 		
-		return indentService.prebuyIndent(userId, jsonOrder, payWay, paidPrice, member, paid);
+		return indentService.prebuyIndent(userId, jsonOrder, payWay, paidPrice, adjustPrice, member, paid);
 	}
 	
 	/**
