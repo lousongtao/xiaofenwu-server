@@ -28,18 +28,24 @@ public class Category2DataAccessor extends BaseDataAccessor implements ICategory
 	@Override
 	public Category2 getCategory2ById(int id) {
 		String hql = "from Category2 where id = "+id;
-		return (Category2) sessionFactory.getCurrentSession().createQuery(hql).uniqueResult();
+		return (Category2) sessionFactory.getCurrentSession().createQuery(hql)
+				.setCacheable(true)
+				.uniqueResult();
 	}
 
 	@Override
 	public List<Category2> getAllCategory2() {
 		String hql = "from Category2";
-		return (List<Category2>)sessionFactory.getCurrentSession().createQuery(hql).list();
+		return (List<Category2>)sessionFactory.getCurrentSession().createQuery(hql)
+				.setCacheable(true)
+				.list();
 	}
 	
 	@Override
 	public List<Category2> getCategory2ByParent(int category1Id) {
 		String hql = "from Category2 where category1.id = "+category1Id;
-		return (List<Category2>)sessionFactory.getCurrentSession().createQuery(hql).list();
+		return (List<Category2>)sessionFactory.getCurrentSession().createQuery(hql)
+				.setCacheable(true)
+				.list();
 	}
 }

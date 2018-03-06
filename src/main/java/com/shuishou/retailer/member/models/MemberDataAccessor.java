@@ -18,13 +18,17 @@ public class MemberDataAccessor extends BaseDataAccessor implements IMemberDataA
 	@Override
 	public Member getMemberById(int id) {
 		String hql = "from Member where id = "+id;
-		return (Member) sessionFactory.getCurrentSession().createQuery(hql).uniqueResult();
+		return (Member) sessionFactory.getCurrentSession().createQuery(hql)
+				.setCacheable(true)
+				.uniqueResult();
 	}
 	
 	@Override
 	public Member getMemberByCard(String card) {
 		String hql = "from Member where memberCard = '"+card+"'";
-		return (Member) sessionFactory.getCurrentSession().createQuery(hql).uniqueResult();
+		return (Member) sessionFactory.getCurrentSession().createQuery(hql)
+				.setCacheable(true)
+				.uniqueResult();
 	}
 
 	@Override
@@ -42,13 +46,17 @@ public class MemberDataAccessor extends BaseDataAccessor implements IMemberDataA
 		if (telephone != null && telephone.length() > 0)
 			c.add(Restrictions.ilike("telephone", "%" + telephone + "%"));
 		c.addOrder(Order.asc("id"));
-		return (List<Member>)c.list();
+		return (List<Member>)c
+				.setCacheable(true)
+				.list();
 	}
 	
 	@Override
 	public List<Member> queryAllMember() {
 		String hql = "from Member";
-		return sessionFactory.getCurrentSession().createQuery(hql).list();
+		return sessionFactory.getCurrentSession().createQuery(hql)
+				.setCacheable(true)
+				.list();
 	}
 
 	@Override

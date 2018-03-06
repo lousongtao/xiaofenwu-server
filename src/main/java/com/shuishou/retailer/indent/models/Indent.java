@@ -28,6 +28,7 @@ import com.shuishou.retailer.ConstantValue;
 @Table(indexes = {@Index(name = "idx_starttime", columnList = "createtime"), 
 		@Index(name="idx_membercard", columnList = "member_card"),
 		@Index(name="idx_indentcode", columnList = "indent_code")})
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Indent {
 
 	@Id

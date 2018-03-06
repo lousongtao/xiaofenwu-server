@@ -15,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class IndentDetail {
 
 	@Id

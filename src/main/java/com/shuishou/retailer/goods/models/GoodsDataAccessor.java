@@ -27,25 +27,33 @@ public class GoodsDataAccessor extends BaseDataAccessor implements IGoodsDataAcc
 	@Override
 	public Goods getGoodsById(int id) {
 		String hql = "from Goods where id = "+id;
-		return (Goods) sessionFactory.getCurrentSession().createQuery(hql).uniqueResult();
+		return (Goods) sessionFactory.getCurrentSession().createQuery(hql)
+				.setCacheable(true)
+				.uniqueResult();
 	}
 
 	@Override
 	public List<Goods> getAllGoods() {
 		String hql = "from Goods";
-		return (List<Goods>)sessionFactory.getCurrentSession().createQuery(hql).list();
+		return (List<Goods>)sessionFactory.getCurrentSession().createQuery(hql)
+				.setCacheable(true)
+				.list();
 	}
 	
 	@Override
 	public List<Goods> getGoodsByParent(int category1Id) {
 		String hql = "from Goods where category1.id = "+category1Id;
-		return (List<Goods>)sessionFactory.getCurrentSession().createQuery(hql).list();
+		return (List<Goods>)sessionFactory.getCurrentSession().createQuery(hql)
+				.setCacheable(true)
+				.list();
 	}
 
 	@Override
 	public Goods getGoodsByBarcode(String barcode) {
 		String hql = "from Goods where barcode = '" + barcode +"'";
-		return (Goods) sessionFactory.getCurrentSession().createQuery(hql).uniqueResult();
+		return (Goods) sessionFactory.getCurrentSession().createQuery(hql)
+				.setCacheable(true)
+				.uniqueResult();
 	}
 	
 }

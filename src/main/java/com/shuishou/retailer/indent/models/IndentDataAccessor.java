@@ -38,13 +38,17 @@ public class IndentDataAccessor extends BaseDataAccessor implements IIndentDataA
 	@Override
 	public Indent getIndentById(int id) {
 		String hql = "from Indent where id="+id;
-		return (Indent) sessionFactory.getCurrentSession().createQuery(hql).uniqueResult();
+		return (Indent) sessionFactory.getCurrentSession().createQuery(hql)
+				.setCacheable(true)
+				.uniqueResult();
 	}
 
 	@Override
 	public List<Indent> getAllIndent() {
 		String hql = "from Indent";
-		return sessionFactory.getCurrentSession().createQuery(hql).list();
+		return sessionFactory.getCurrentSession().createQuery(hql)
+				.setCacheable(true)
+				.list();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -80,7 +84,9 @@ public class IndentDataAccessor extends BaseDataAccessor implements IIndentDataA
 		}
 		c.setFirstResult(start);
 		c.setMaxResults(limit);
-		return (List<Indent>)c.list();
+		return (List<Indent>)c
+				.setCacheable(true)
+				.list();
 	}
 	
 	@Override
@@ -139,7 +145,9 @@ public class IndentDataAccessor extends BaseDataAccessor implements IIndentDataA
 		c.add(Restrictions.eq("indentType", ConstantValue.INDENT_TYPE_ORDER));
 		c.add(Restrictions.ge("createTime", starttime));
 		c.add(Restrictions.le("createTime", endtime));
-		return (List<Indent>)c.list();
+		return (List<Indent>)c
+				.setCacheable(true)
+				.list();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -156,6 +164,8 @@ public class IndentDataAccessor extends BaseDataAccessor implements IIndentDataA
 		c.setFirstResult(start);
 		c.setMaxResults(limit);
 		c.add(Restrictions.in("indentType", new Integer[]{(int)ConstantValue.INDENT_TYPE_PREBUY_PAID, (int)ConstantValue.INDENT_TYPE_PREBUY_UNPAID}));
-		return (List<Indent>)c.list();
+		return (List<Indent>)c
+				.setCacheable(true)
+				.list();
 	}
 }

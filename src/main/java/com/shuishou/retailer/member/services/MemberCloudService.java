@@ -7,10 +7,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.swing.JOptionPane;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -21,6 +20,8 @@ import com.shuishou.retailer.ServerProperties;
 import com.shuishou.retailer.common.models.Configs;
 import com.shuishou.retailer.common.models.IConfigsDataAccessor;
 import com.shuishou.retailer.member.models.Member;
+import com.shuishou.retailer.member.models.MemberBalance;
+import com.shuishou.retailer.member.models.MemberScore;
 import com.shuishou.retailer.views.ObjectListResult;
 import com.shuishou.retailer.views.ObjectResult;
 import com.shuishou.retailer.views.Result;
@@ -42,7 +43,8 @@ public class MemberCloudService implements IMemberCloudService{
 		params.put("telephone", telephone);
 		params.put("address", address);
 		params.put("postCode", postCode);
-		params.put("birth", ConstantValue.DFYMDHMS.format(birth));
+		if (birth != null)
+			params.put("birth", ConstantValue.DFYMDHMS.format(birth));
 		
 		String url = "member/addmember";
 		String response = HttpUtil.getJSONObjectByPost(ServerProperties.MEMBERCLOUDLOCATION + url, params);
@@ -68,7 +70,8 @@ public class MemberCloudService implements IMemberCloudService{
 		params.put("telephone", telephone);
 		params.put("address", address);
 		params.put("postCode", postCode);
-		params.put("birth", ConstantValue.DFYMDHMS.format(birth));
+		if (birth != null)
+			params.put("birth", ConstantValue.DFYMDHMS.format(birth));
 		params.put("id", String.valueOf(id));
 		String url = "member/updatemember";
 		String response = HttpUtil.getJSONObjectByPost(ServerProperties.MEMBERCLOUDLOCATION + url, params);
@@ -204,6 +207,7 @@ public class MemberCloudService implements IMemberCloudService{
 	}
 
 	@Override
+	@Transactional
 	public ObjectResult recordMemberConsumption(String memberCard, double consumptionPrice) throws DataCheckException {
 		boolean byScore = false;
 		double scorePerDollar = 0;
@@ -225,7 +229,13 @@ public class MemberCloudService implements IMemberCloudService{
 		Map<String, String> params = new HashMap<>();
 		params.put("customerName", ServerProperties.MEMBERCUSTOMERNAME);
 		params.put("memberCard",memberCard);
-		String url = "member/deletemember";
+		params.put("consumptionPrice", String.format(ConstantValue.FORMAT_DOUBLE, consumptionPrice));
+		params.put("scorePerDollar", String.valueOf(scorePerDollar));
+		params.put("byDeposit", String.valueOf(byDeposit));
+		params.put("branchName", branchName);
+		params.put("byScore", String.valueOf(byScore));
+		
+		String url = "member/recordconsumption";
 		String response = HttpUtil.getJSONObjectByPost(ServerProperties.MEMBERCLOUDLOCATION + url, params);
 		if (response == null){
 			return new ObjectResult("get null from server for delete member. URL = " + url + ", param = "+ params, false);
@@ -238,4 +248,37 @@ public class MemberCloudService implements IMemberCloudService{
 		return new ObjectResult(Result.OK, true, result.data);
 	}
 
+	public ObjectListResult queryMemberBalance(int memberId){
+		String url = "member/querymemberbalance";
+		Map<String, String> params = new HashMap<>();
+		params.put("customerName", ServerProperties.MEMBERCUSTOMERNAME);
+		params.put("memberId", String.valueOf(memberId));
+		String response = HttpUtil.getJSONObjectByPost(ServerProperties.MEMBERCLOUDLOCATION + url, params);
+		if (response == null){
+			return new ObjectListResult("get null from server for query member balance. URL = " + url + ", param = "+ params, false);
+		}
+		Gson gson = new GsonBuilder().setDateFormat(ConstantValue.DATE_PATTERN_YMD).create();
+		HttpResult<ArrayList<MemberBalance>> result = gson.fromJson(response, new TypeToken<HttpResult<ArrayList<MemberBalance>>>(){}.getType());
+		if (!result.success){
+			return new ObjectListResult("return false while query member balance. URL = " + url + ", response = "+response, false);
+		}
+		return new ObjectListResult(Result.OK, true, result.data);
+	}
+	
+	public ObjectListResult queryMemberScore(int memberId){
+		String url = "member/querymemberscore";
+		Map<String, String> params = new HashMap<>();
+		params.put("customerName", ServerProperties.MEMBERCUSTOMERNAME);
+		params.put("memberId", String.valueOf(memberId));
+		String response = HttpUtil.getJSONObjectByPost(ServerProperties.MEMBERCLOUDLOCATION + url, params);
+		if (response == null){
+			return new ObjectListResult("get null from server for query member score. URL = " + url + ", param = "+ params, false);
+		}
+		Gson gson = new GsonBuilder().setDateFormat(ConstantValue.DATE_PATTERN_YMD).create();
+		HttpResult<ArrayList<MemberScore>> result = gson.fromJson(response, new TypeToken<HttpResult<ArrayList<MemberScore>>>(){}.getType());
+		if (!result.success){
+			return new ObjectListResult("return false while query member score. URL = " + url + ", response = "+response, false);
+		}
+		return new ObjectListResult(Result.OK, true, result.data);
+	}
 }

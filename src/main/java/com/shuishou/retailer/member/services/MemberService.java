@@ -15,11 +15,11 @@ import com.shuishou.retailer.common.models.Configs;
 import com.shuishou.retailer.common.models.IConfigsDataAccessor;
 import com.shuishou.retailer.log.models.LogData;
 import com.shuishou.retailer.log.services.ILogService;
-import com.shuishou.retailer.member.models.IMemberConsumptionDataAccessor;
+import com.shuishou.retailer.member.models.IMemberBalanceDataAccessor;
 import com.shuishou.retailer.member.models.IMemberDataAccessor;
 import com.shuishou.retailer.member.models.IMemberScoreDataAccessor;
 import com.shuishou.retailer.member.models.Member;
-import com.shuishou.retailer.member.models.MemberConsumption;
+import com.shuishou.retailer.member.models.MemberBalance;
 import com.shuishou.retailer.member.models.MemberScore;
 import com.shuishou.retailer.views.ObjectListResult;
 import com.shuishou.retailer.views.ObjectResult;
@@ -32,7 +32,7 @@ public class MemberService implements IMemberService{
 	private IMemberDataAccessor memberDA;
 	
 	@Autowired
-	private IMemberConsumptionDataAccessor memberConsumptionDA;
+	private IMemberBalanceDataAccessor memberBalanceDA;
 	
 	@Autowired
 	private IMemberScoreDataAccessor memberScoreDA;
@@ -106,6 +106,14 @@ public class MemberService implements IMemberService{
 		m.setScore(newScore);
 		m.setLastModifyTime(new Date());
 		memberDA.save(m);
+		MemberScore ms = new MemberScore();
+		ms.setAmount(newScore - oldScore);
+		ms.setDate(new Date());
+		ms.setMember(m);
+		ms.setNewValue(newScore);
+		ms.setPlace("");
+		ms.setType(ConstantValue.MEMBERSCORE_ADJUST);
+		memberScoreDA.save(ms);
 		UserData selfUser = userDA.getUserById(userId);
 		
 		logService.write(selfUser, LogData.LogType.MEMBER_CHANGE.toString(), "User " + selfUser + " update member score "+ oldScore +" to " + newScore);
@@ -124,6 +132,14 @@ public class MemberService implements IMemberService{
 		m.setBalanceMoney(newBalance);
 		m.setLastModifyTime(new Date());
 		memberDA.save(m);
+		MemberBalance mb = new MemberBalance();
+		mb.setAmount(newBalance - oldBalance);
+		mb.setDate(new Date());
+		mb.setMember(m);
+		mb.setNewValue(newBalance);
+		mb.setPlace("");
+		mb.setType(ConstantValue.MEMBERDEPOSIT_ADJUST);
+		memberBalanceDA.save(mb);
 		UserData selfUser = userDA.getUserById(userId);
 		
 		logService.write(selfUser, LogData.LogType.MEMBER_CHANGE.toString(), "User " + selfUser + " update member balance "+ oldBalance +" to " + newBalance);
@@ -137,11 +153,28 @@ public class MemberService implements IMemberService{
 		
 		if (m == null)
 			return new ObjectResult("cannot find member by id "+ id, false, null);
-		
+		Date date = new Date();
 		double oldBalance = m.getBalanceMoney();
 		m.setBalanceMoney(m.getBalanceMoney() + rechargeValue);
-		m.setLastModifyTime(new Date());
+		m.setLastModifyTime(date);
 		memberDA.save(m);
+		
+		String branchName = "";
+		List<Configs> configs = configsDA.queryConfigs();
+		for(Configs config : configs){
+			if (ConstantValue.CONFIGS_BRANCHNAME.equals(config.getName())){
+				branchName = config.getValue();
+			} 
+		}
+		MemberBalance mb = new MemberBalance();
+		mb.setAmount(rechargeValue);
+		mb.setDate(date);
+		mb.setMember(m);
+		mb.setNewValue(m.getBalanceMoney());
+		mb.setPlace(branchName);
+		mb.setType(ConstantValue.MEMBERDEPOSIT_RECHARGE);
+		memberBalanceDA.save(mb);
+		
 		UserData selfUser = userDA.getUserById(userId);
 		
 		logService.write(selfUser, LogData.LogType.MEMBER_CHANGE.toString(), "User " + selfUser + " recharge member. old balance = "+ oldBalance +", recharge to " + m.getBalanceMoney());
@@ -179,23 +212,16 @@ public class MemberService implements IMemberService{
 
 	@Override
 	@Transactional
-	public ObjectListResult queryPurchase(int userId, int id) {
-		// TODO Auto-generated method stub
-		return null;
+	public ObjectListResult queryMemberBalance(int memberId) {
+		List<MemberBalance> mbs = memberBalanceDA.getMemberBalanceByMemberId(memberId);
+		return new ObjectListResult(Result.OK, true, mbs, mbs.size());
 	}
 
 	@Override
 	@Transactional
-	public ObjectListResult queryRecharge(int userId, int id) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	@Transactional
-	public ObjectListResult queryScore(int userId, int id) {
-		// TODO Auto-generated method stub
-		return null;
+	public ObjectListResult queryMemberScore(int memberId) {
+		List<MemberScore> mss = memberScoreDA.getMemberScoreByMemberId(memberId);
+		return new ObjectListResult(Result.OK, true, mss, mss.size());
 	}
 
 	@Override
@@ -232,6 +258,7 @@ public class MemberService implements IMemberService{
 			else 
 				ms.setType(ConstantValue.MEMBERSCORE_REFUND);
 			ms.setMember(member);
+			ms.setNewValue(member.getScore() + ms.getAmount());
 			memberScoreDA.save(ms);
 			member.setScore(member.getScore() + ms.getAmount());
 			member.setLastModifyTime(time);
@@ -241,17 +268,17 @@ public class MemberService implements IMemberService{
 			if (member.getBalanceMoney() < consumptionPrice){
 				throw new DataCheckException("Meber's balance is not enought to pay");
 			}
-			MemberConsumption mc = new MemberConsumption();
-			mc.setAmount(consumptionPrice);
-			mc.setDate(time);
-			mc.setMember(member);
-			mc.setPlace(branchName);
+			MemberBalance mb = new MemberBalance();
+			mb.setAmount(consumptionPrice);
+			mb.setDate(time);
+			mb.setMember(member);
+			mb.setPlace(branchName);
 			if (consumptionPrice > 0)
-				mc.setType(ConstantValue.MEMBERDEPOSIT_CONSUM);
+				mb.setType(ConstantValue.MEMBERDEPOSIT_CONSUM);
 			else 
-				mc.setType(ConstantValue.MEMBERDEPOSIT_REFUND);
-			
-			memberConsumptionDA.save(mc);
+				mb.setType(ConstantValue.MEMBERDEPOSIT_REFUND);
+			mb.setNewValue(member.getBalanceMoney() - consumptionPrice);
+			memberBalanceDA.save(mb);
 			member.setBalanceMoney(member.getBalanceMoney() - consumptionPrice);
 			member.setLastModifyTime(time);
 			memberDA.save(member);

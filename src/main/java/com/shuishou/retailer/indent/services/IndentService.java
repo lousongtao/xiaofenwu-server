@@ -1,23 +1,11 @@
 package com.shuishou.retailer.indent.services;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
-import javax.servlet.http.HttpServletRequest;
 
 import org.hibernate.Hibernate;
 import org.json.JSONArray;
@@ -33,8 +21,6 @@ import com.shuishou.retailer.DataCheckException;
 import com.shuishou.retailer.ServerProperties;
 import com.shuishou.retailer.account.models.IUserDataAccessor;
 import com.shuishou.retailer.account.models.UserData;
-import com.shuishou.retailer.common.models.Configs;
-import com.shuishou.retailer.common.models.IConfigsDataAccessor;
 import com.shuishou.retailer.goods.models.Goods;
 import com.shuishou.retailer.goods.models.IGoodsDataAccessor;
 import com.shuishou.retailer.goods.models.IPackageBindDataAccessor;
@@ -48,12 +34,6 @@ import com.shuishou.retailer.log.models.LogData;
 import com.shuishou.retailer.log.services.ILogService;
 import com.shuishou.retailer.management.models.IShiftWorkDataAccessor;
 import com.shuishou.retailer.management.models.ShiftWork;
-import com.shuishou.retailer.member.models.IMemberConsumptionDataAccessor;
-import com.shuishou.retailer.member.models.IMemberDataAccessor;
-import com.shuishou.retailer.member.models.IMemberScoreDataAccessor;
-import com.shuishou.retailer.member.models.Member;
-import com.shuishou.retailer.member.models.MemberConsumption;
-import com.shuishou.retailer.member.models.MemberScore;
 import com.shuishou.retailer.member.services.IMemberCloudService;
 import com.shuishou.retailer.member.services.IMemberService;
 import com.shuishou.retailer.views.ObjectListResult;
@@ -139,11 +119,14 @@ public class IndentService implements IIndentService {
 		indentDA.save(indent);
 		
 		if (memberCard != null && memberCard.length() > 0){
+			ObjectResult result = null;
 			if (ServerProperties.MEMBERLOCATION_LOCAL.equals(ServerProperties.MEMBERLOCATION)){
-				memberService.recordMemberConsumption(memberCard, paidPrice);
+				result = memberService.recordMemberConsumption(memberCard, paidPrice);
 			} else {
-				memberCloudService.recordMemberConsumption(memberCard, paidPrice);
+				result = memberCloudService.recordMemberConsumption(memberCard, paidPrice);
 			}
+			if (!result.success)
+				throw new DataCheckException(result.result);
 		}
 		
 		

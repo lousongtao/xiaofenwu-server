@@ -13,27 +13,27 @@ import com.google.common.collect.Lists;
 import com.shuishou.retailer.models.BaseDataAccessor;
 
 @Repository
-public class MemberConsumptionDataAccessor extends BaseDataAccessor implements IMemberConsumptionDataAccessor {
+public class MemberBalanceDataAccessor extends BaseDataAccessor implements IMemberBalanceDataAccessor {
 
 	@Override
-	public List<MemberConsumption> getMemberConsumptionByMemberId(int memberId) {
-		String hql = "select ms from MemberConsumption ms where ms.member.id = " + memberId;
+	public List<MemberBalance> getMemberBalanceByMemberId(int memberId) {
+		String hql = "select ms from MemberBalance ms where ms.member.id = " + memberId;
 		return sessionFactory.getCurrentSession().createQuery(hql).list();
 	}
 
 	@Override
-	public void save(MemberConsumption mc) {
-		sessionFactory.getCurrentSession().save(mc);
+	public void save(MemberBalance mb) {
+		sessionFactory.getCurrentSession().save(mb);
 	}
 
 	@Override
-	public void delete(MemberConsumption mc) {
-		sessionFactory.getCurrentSession().delete(mc);
+	public void delete(MemberBalance mb) {
+		sessionFactory.getCurrentSession().delete(mb);
 	}
 
 	@Override
 	public void deleteByMember(int memberId) {
-		String hql = "delete from MemberConsumption mc where mc.member.id = "+ memberId;
+		String hql = "delete from MemberBalance mc where mc.member.id = "+ memberId;
 		sessionFactory.getCurrentSession().createQuery(hql).executeUpdate();
 	}
 

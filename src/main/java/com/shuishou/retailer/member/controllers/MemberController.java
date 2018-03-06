@@ -59,6 +59,34 @@ public class MemberController extends BaseController {
 		}
 	}
 	
+	@RequestMapping(value = "/member/querymemberscore", method = {RequestMethod.POST})
+	public @ResponseBody ObjectListResult queryMemberScore(
+			@RequestParam(value = "userId", required = true) int userId,
+			@RequestParam(value = "memberId", required = true) int memberId) throws Exception{
+		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_QUERY_MEMBER)){
+			return new ObjectListResult("no_permission", false);
+		}
+		if (ServerProperties.MEMBERLOCATION_LOCAL.equals(ServerProperties.MEMBERLOCATION)){
+			return memberService.queryMemberScore(memberId);
+		} else {
+			return memberCloudService.queryMemberScore(memberId);
+		}
+	}
+	
+	@RequestMapping(value = "/member/querymemberbalance", method = {RequestMethod.POST})
+	public @ResponseBody ObjectListResult queryMemberBalance(
+			@RequestParam(value = "userId", required = true) int userId,
+			@RequestParam(value = "memberId", required = true) int memberId) throws Exception{
+		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_QUERY_MEMBER)){
+			return new ObjectListResult("no_permission", false);
+		}
+		if (ServerProperties.MEMBERLOCATION_LOCAL.equals(ServerProperties.MEMBERLOCATION)){
+			return memberService.queryMemberBalance(memberId);
+		} else {
+			return memberCloudService.queryMemberBalance(memberId);
+		}
+	}
+	
 	@RequestMapping(value = "/member/addmember", method = {RequestMethod.POST})
 	public @ResponseBody ObjectResult addMember(
 			@RequestParam(value = "userId", required = true) int userId,

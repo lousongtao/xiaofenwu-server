@@ -95,6 +95,10 @@
         <beans:prop key="hibernate.auto_close_session">true</beans:prop>
         <beans:prop key="hibernate.hbm2ddl.auto">update</beans:prop>
         
+		<beans:prop key="hibernate.c3p0.min_size">2</beans:prop>
+        <beans:prop key="hibernate.c3p0.max_size">20</beans:prop>
+        <beans:prop key="hibernate.c3p0.timeout">1800</beans:prop>
+        <beans:prop key="hibernate.c3p0.max_statements">50</beans:prop>
 
         <!-- Enable the second-level cache  -->
         <beans:prop key="hibernate.cache.region.factory_class">org.hibernate.cache.ehcache.SingletonEhCacheRegionFactory</beans:prop>

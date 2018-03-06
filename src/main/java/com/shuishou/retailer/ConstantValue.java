@@ -75,8 +75,11 @@ public class ConstantValue {
 	public static final int MATERIAL_ALARMSTATUS_ALARMACCEPTED = 2;
 	public static final int MATERIAL_ALARMSTATUS_ALARMDELAY = 3;
 	
-	public static final int MEMBERSCORE_CONSUM = 1;//积分类型
-	public static final int MEMBERSCORE_REFUND = 2;//积分类型
-	public static final int MEMBERDEPOSIT_CONSUM = 1;//消费余额类型
-	public static final int MEMBERDEPOSIT_REFUND = 2;//消费余额类型
+	public static final int MEMBERSCORE_CONSUM = 1;//积分类型-消费
+	public static final int MEMBERSCORE_REFUND = 2;//积分类型-退货
+	public static final int MEMBERSCORE_ADJUST = 3;//积分类型-调整
+	public static final int MEMBERDEPOSIT_CONSUM = 1;//消费余额类型-消费
+	public static final int MEMBERDEPOSIT_REFUND = 2;//消费余额类型-退款
+	public static final int MEMBERDEPOSIT_RECHARGE = 3;//消费余额类型-充值
+	public static final int MEMBERDEPOSIT_ADJUST = 4;//消费余额类型-调整
 }

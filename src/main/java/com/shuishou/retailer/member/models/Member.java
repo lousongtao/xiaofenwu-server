@@ -12,12 +12,16 @@ import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.shuishou.retailer.ConstantValue;
 
 @Entity
 @Table
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Member {
 
 	@Id
@@ -69,7 +73,7 @@ public class Member {
 	@JsonIgnore
 	@OneToMany(cascade=CascadeType.ALL, mappedBy="member")
 	@OrderBy("id")
-	private List<MemberConsumption> consumptions;
+	private List<MemberBalance> balance;
 
 	public int getId() {
 		return id;
@@ -175,12 +179,13 @@ public class Member {
 		this.scores = scores;
 	}
 
-	public List<MemberConsumption> getConsumptions() {
-		return consumptions;
+
+	public List<MemberBalance> getBalance() {
+		return balance;
 	}
 
-	public void setConsumptions(List<MemberConsumption> consumptions) {
-		this.consumptions = consumptions;
+	public void setBalance(List<MemberBalance> balance) {
+		this.balance = balance;
 	}
 
 	@Override

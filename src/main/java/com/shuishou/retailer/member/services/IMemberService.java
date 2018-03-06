@@ -17,9 +17,8 @@ public interface IMemberService {
 	ObjectResult recordMemberConsumption(String memberCard, double consumptionPrice) throws DataCheckException;
 	ObjectListResult queryMember(String name, String memberCard, String address, String postCode, String telephone);
 	ObjectListResult queryAllMember();
-	ObjectListResult queryPurchase(int userId, int id);
-	ObjectListResult queryRecharge(int userId, int id);
-	ObjectListResult queryScore(int userId, int id);
+	ObjectListResult queryMemberBalance(int memberId);
+	ObjectListResult queryMemberScore(int memberId);
 	
 	
 }

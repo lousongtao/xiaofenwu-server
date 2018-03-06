@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
 @Table
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Category1 implements Serializable {
 
 	@Id
