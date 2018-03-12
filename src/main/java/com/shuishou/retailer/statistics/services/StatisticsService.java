@@ -3,6 +3,8 @@ package com.shuishou.retailer.statistics.services;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -36,6 +38,8 @@ public class StatisticsService implements IStatisticsService{
 	private IIndentDataAccessor indentDA;
 	
 	private DecimalFormat doubleFormat = new DecimalFormat("0.00");
+	
+	private HashMap<Integer, Goods> mapGoods;
 	
 	@Override
 	@Transactional
@@ -72,6 +76,15 @@ public class StatisticsService implements IStatisticsService{
 			}
 		}
 		return result;
+	}
+	
+	@Transactional
+	private void initGoodsMap(){
+		List<Goods> goods = goodsDA.getAllGoods();
+		mapGoods = new HashMap<>();
+		for (Goods g : goods) {
+			mapGoods.put(g.getId(), g);
+		}
 	}
 	
 	/**
@@ -141,6 +154,13 @@ public class StatisticsService implements IStatisticsService{
 		while(its.hasNext()){
 			stats.add(its.next());
 		}
+		
+		Collections.sort(stats, new Comparator<StatItem>(){
+
+			@Override
+			public int compare(StatItem o1, StatItem o2) {
+				return o1.itemName.compareTo(o2.itemName);
+			}});
 		return stats;
 	}
 	
@@ -152,6 +172,8 @@ public class StatisticsService implements IStatisticsService{
 	 */
 	@Transactional
 	private ArrayList<StatItem> statisticsSell(List<Indent> indents, int sellGranularity){
+		if (mapGoods == null)
+			initGoodsMap();
 		ArrayList<StatItem> stats = new ArrayList<>();
 		HashMap<String, StatItem> mapSell = new HashMap<>();
 		//first define one UNFOUND for those dish/category1/category2 cannot be found
@@ -161,7 +183,7 @@ public class StatisticsService implements IStatisticsService{
 		for(Indent indent : indents){
 			List<IndentDetail> details = indent.getItems();
 			for(IndentDetail detail : details){
-				Goods goods = goodsDA.getGoodsById(detail.getGoodsId());
+				Goods goods = mapGoods.get(detail.getGoodsId());
 				if (sellGranularity == ConstantValue.STATISTICS_SELLGRANULARITY_BYGOODS){
 					if (goods == null){
 						ssUnfound.soldAmount += detail.getAmount();
