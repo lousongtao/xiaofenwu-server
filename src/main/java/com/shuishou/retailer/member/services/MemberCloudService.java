@@ -19,9 +19,11 @@ import com.shuishou.retailer.DataCheckException;
 import com.shuishou.retailer.ServerProperties;
 import com.shuishou.retailer.common.models.Configs;
 import com.shuishou.retailer.common.models.IConfigsDataAccessor;
+import com.shuishou.retailer.member.models.IMemberUpgradeDataAccessor;
 import com.shuishou.retailer.member.models.Member;
 import com.shuishou.retailer.member.models.MemberBalance;
 import com.shuishou.retailer.member.models.MemberScore;
+import com.shuishou.retailer.member.models.MemberUpgrade;
 import com.shuishou.retailer.views.ObjectListResult;
 import com.shuishou.retailer.views.ObjectResult;
 import com.shuishou.retailer.views.Result;
@@ -31,6 +33,9 @@ public class MemberCloudService implements IMemberCloudService{
 
 	@Autowired
 	private IConfigsDataAccessor configDA;
+	
+	@Autowired
+	private IMemberUpgradeDataAccessor memberUpgradeDA;
 	
 	@Override
 	public ObjectResult addMember(int userId, String name, String memberCard, String address, String postCode,
@@ -245,7 +250,81 @@ public class MemberCloudService implements IMemberCloudService{
 		if (!result.success){
 			return new ObjectResult("return false while update member. URL = " + url + ", response = "+response, false);
 		}
+		Member member = result.data;
+		member = checkMemberUpgrade(member);
 		return new ObjectResult(Result.OK, true, result.data);
+	}
+	
+	/**
+	 * 根据用户信息, 判断是否达到升级条件
+	 * 1. 当比较值落入smallValue和bigValue之间, 修改目标项 
+	 * @param m
+	 */
+	@Transactional
+	private Member checkMemberUpgrade(Member m) {
+		// 检查会员是否达到升级条件, 按照循序检查, 碰到不达标的条件, 终止退出
+		List<MemberUpgrade> mus = memberUpgradeDA.getAllMemberUpgrade();
+		if (mus != null && !mus.isEmpty()) {
+			for (int i = 0; i < mus.size(); i++) {
+				MemberUpgrade mu = mus.get(i);
+				double compareValue = 0;
+				if ("score".equalsIgnoreCase(mu.getCompareField())){
+					compareValue = m.getScore();
+				}
+				boolean bSmall = false;
+				boolean bBig = false;
+				switch(mu.getSmallRelation()){
+				case ConstantValue.MEMBERUPGRADE_RELATION_EQUAL:
+					bSmall = mu.getSmallValue() == compareValue;
+					break;
+				case ConstantValue.MEMBERUPGRADE_RELATION_GREATER:
+					bSmall = compareValue > mu.getSmallValue();
+					break;
+				case ConstantValue.MEMBERUPGRADE_RELATION_GREATEREQUAL:
+					bSmall = compareValue >= mu.getSmallValue();
+					break;
+				}
+				switch(mu.getBigRelation()){
+				case ConstantValue.MEMBERUPGRADE_RELATION_EQUAL:
+					bBig = mu.getBigValue() == compareValue;
+					break;
+				case ConstantValue.MEMBERUPGRADE_RELATION_LESS:
+					bBig = compareValue < mu.getBigValue();
+					break;
+				case ConstantValue.MEMBERUPGRADE_RELATION_LESSEQUAL:
+					bBig = compareValue <= mu.getBigValue();
+					break;
+				}
+				if (bSmall & bBig){
+					if ("discountrate".equalsIgnoreCase(mu.getExecuteField())){
+						if (m.getDiscountRate() != mu.getExecuteValue()){
+							m = updateMemberDiscountRate(m.getId(), mu.getExecuteValue());
+							if (m != null)
+								return m;
+						}
+					}
+				}
+			}
+		}
+		return m;
+	}
+	
+	private Member updateMemberDiscountRate(int memberId, double discountRate){
+		String url = "member/updatememberdiscountrate";
+		Map<String, String> params = new HashMap<>();
+		params.put("customerName", ServerProperties.MEMBERCUSTOMERNAME);
+		params.put("id", String.valueOf(memberId));
+		params.put("discountRate", String.valueOf(discountRate));
+		String response = HttpUtil.getJSONObjectByPost(ServerProperties.MEMBERCLOUDLOCATION + url, params);
+		if (response == null){
+			return null;
+		}
+		Gson gson = new GsonBuilder().setDateFormat(ConstantValue.DATE_PATTERN_YMD).create();
+		HttpResult<Member> result = gson.fromJson(response, new TypeToken<HttpResult<Member>>(){}.getType());
+		if (!result.success){
+			return null;
+		}
+		return result.data;
 	}
 
 	public ObjectListResult queryMemberBalance(int memberId){

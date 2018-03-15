@@ -1,5 +1,7 @@
 package com.shuishou.retailer.member.services;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -18,9 +20,11 @@ import com.shuishou.retailer.log.services.ILogService;
 import com.shuishou.retailer.member.models.IMemberBalanceDataAccessor;
 import com.shuishou.retailer.member.models.IMemberDataAccessor;
 import com.shuishou.retailer.member.models.IMemberScoreDataAccessor;
+import com.shuishou.retailer.member.models.IMemberUpgradeDataAccessor;
 import com.shuishou.retailer.member.models.Member;
 import com.shuishou.retailer.member.models.MemberBalance;
 import com.shuishou.retailer.member.models.MemberScore;
+import com.shuishou.retailer.member.models.MemberUpgrade;
 import com.shuishou.retailer.views.ObjectListResult;
 import com.shuishou.retailer.views.ObjectResult;
 import com.shuishou.retailer.views.Result;
@@ -36,6 +40,9 @@ public class MemberService implements IMemberService{
 	
 	@Autowired
 	private IMemberScoreDataAccessor memberScoreDA;
+	
+	@Autowired
+	private IMemberUpgradeDataAccessor memberUpgradeDA;
 	
 	@Autowired
 	private IConfigsDataAccessor configsDA;
@@ -283,7 +290,121 @@ public class MemberService implements IMemberService{
 			member.setLastModifyTime(time);
 			memberDA.save(member);
 		}
+		checkMemberUpgrade(member);
+		return new ObjectResult(Result.OK, true);
+	}
+	
+	/**
+	 * 根据用户信息, 判断是否达到升级条件
+	 * 1. 当比较值落入smallValue和bigValue之间, 修改目标项 
+	 * @param m
+	 */
+	@Transactional
+	private void checkMemberUpgrade(Member m) {
+		// 检查会员是否达到升级条件, 按照循序检查, 碰到不达标的条件, 终止退出
+		List<MemberUpgrade> mus = memberUpgradeDA.getAllMemberUpgrade();
+		if (mus != null && !mus.isEmpty()) {
+			for (int i = 0; i < mus.size(); i++) {
+				MemberUpgrade mu = mus.get(i);
+				double compareValue = 0;
+				if ("score".equalsIgnoreCase(mu.getCompareField())){
+					compareValue = m.getScore();
+				}
+				boolean bSmall = false;
+				boolean bBig = false;
+				switch(mu.getSmallRelation()){
+				case ConstantValue.MEMBERUPGRADE_RELATION_EQUAL:
+					bSmall = mu.getSmallValue() == compareValue;
+					break;
+				case ConstantValue.MEMBERUPGRADE_RELATION_GREATER:
+					bSmall = mu.getSmallValue() > compareValue;
+					break;
+				case ConstantValue.MEMBERUPGRADE_RELATION_GREATEREQUAL:
+					bSmall = mu.getSmallValue() >= compareValue;
+					break;
+				}
+				switch(mu.getBigRelation()){
+				case ConstantValue.MEMBERUPGRADE_RELATION_EQUAL:
+					bBig = mu.getBigValue() == compareValue;
+					break;
+				case ConstantValue.MEMBERUPGRADE_RELATION_LESS:
+					bBig = mu.getBigValue() < compareValue;
+					break;
+				case ConstantValue.MEMBERUPGRADE_RELATION_LESSEQUAL:
+					bBig = mu.getBigValue() <= compareValue;
+					break;
+				}
+				if (bSmall & bBig){
+					if ("discountrate".equalsIgnoreCase(mu.getExecuteField())){
+						if (m.getDiscountRate() != mu.getExecuteValue()){
+							m.setDiscountRate(mu.getExecuteValue());
+							memberDA.save(m);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	@Override
+	@Transactional
+	public ObjectResult addMemberUpgrade(int userId, String compareField, double smallValue, int smallRelation,
+			double bigValue, int bigRelation, String executeField, double executeValue) {
+		MemberUpgrade mu = new MemberUpgrade();
+
+		mu.setCompareField(compareField);
+		mu.setSmallValue(smallValue);
+		mu.setSmallRelation(smallRelation);
+		mu.setBigRelation(bigRelation);
+		mu.setBigValue(bigValue);
+		mu.setExecuteField(executeField);
+		mu.setExecuteValue(executeValue);
+		memberUpgradeDA.save(mu);
+		
+		UserData selfUser = userDA.getUserById(userId);
+		logService.write(selfUser, LogData.LogType.MEMBERUPGRADE_CHANGE.toString(), "User " + selfUser + " add memberupgrade : " + mu);
+		return new ObjectResult(Result.OK, true, mu);
+	}
+
+	@Override
+	@Transactional
+	public ObjectResult updateMemberUpgrade(int userId, int id, String compareField, double smallValue, int smallRelation,
+			double bigValue, int bigRelation, String executeField, double executeValue) {
+		MemberUpgrade mu = memberUpgradeDA.getMemberUpgrade(id);
+		if (mu == null)
+			return new ObjectResult("cannot find memberupgrade by id "+ id, false, null);
+		mu.setCompareField(compareField);
+		mu.setSmallValue(smallValue);
+		mu.setSmallRelation(smallRelation);
+		mu.setBigRelation(bigRelation);
+		mu.setBigValue(bigValue);
+		mu.setExecuteField(executeField);
+		mu.setExecuteValue(executeValue);
+		memberUpgradeDA.save(mu);
+		
+		UserData selfUser = userDA.getUserById(userId);
+		logService.write(selfUser, LogData.LogType.MEMBERUPGRADE_CHANGE.toString(), "User " + selfUser + " update memberupgrade : " + mu);
+		return new ObjectResult(Result.OK, true, mu);
+	}
+
+	@Override
+	@Transactional
+	public ObjectResult deleteMemberUpgrade(int userId, int id) {
+		MemberUpgrade mu = memberUpgradeDA.getMemberUpgrade(id);
+		if (mu == null)
+			return new ObjectResult("cannot find memberupgrade by id "+ id, false, null);
+		memberUpgradeDA.delete(mu);
+		UserData selfUser = userDA.getUserById(userId);
+		logService.write(selfUser, LogData.LogType.MEMBERUPGRADE_CHANGE.toString(), "User " + selfUser + " delete memberupgrade : " + mu);
 		return new ObjectResult(Result.OK, true);
 	}
 
+	@Override
+	@Transactional
+	public ObjectListResult queryMemberUpgrade() {
+		List<MemberUpgrade> mus = memberUpgradeDA.getAllMemberUpgrade();
+		return new ObjectListResult(Result.OK, true, mus);
+	}
+
+	
 }
