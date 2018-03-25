@@ -262,4 +262,47 @@ public class GoodsController extends BaseController {
 		ObjectListResult result = goodsService.queryPackageBind(userId);
 		return result;
 	}
+	
+	@RequestMapping(value = "promotion/addpromotion", method = {RequestMethod.POST})
+	public @ResponseBody ObjectResult addPromotion(
+			@RequestParam(value="userId", required = true) int userId, 
+			@RequestParam(value="forbidMemberDiscount", required = true) boolean forbidMemberDiscount, 
+			@RequestParam(value="objectAType", required = true) int objectAType, 
+			@RequestParam(value="objectAId", required = true) int objectAId, 
+			@RequestParam(value="objectAQuantity", required = true) int objectAQuantity, 
+			@RequestParam(value="objectBType", required = false) int objectBType, 
+			@RequestParam(value="objectBId", required = false) int objectBId, 
+			@RequestParam(value="objectBQuantity", required = false) int objectBQuantity, 
+			@RequestParam(value="rewardType", required = true) int rewardType, 
+			@RequestParam(value="rewardValue", required = true) double rewardValue) throws Exception{
+		return goodsService.addPromotion(userId, forbidMemberDiscount, objectAType, objectAId, objectAQuantity, objectBType, objectBId, objectBQuantity, rewardType, rewardValue);
+	}
+	
+	@RequestMapping(value = "promotion/updatepromotion", method = {RequestMethod.POST})
+	public @ResponseBody ObjectResult updatePromotion(
+			@RequestParam(value="userId", required = true) int userId,
+			@RequestParam(value="id", required = true) int id,
+			@RequestParam(value="forbidMemberDiscount", required = true) boolean forbidMemberDiscount, 
+			@RequestParam(value="objectAType", required = true) int objectAType, 
+			@RequestParam(value="objectAId", required = true) int objectAId, 
+			@RequestParam(value="objectAQuantity", required = true) int objectAQuantity, 
+			@RequestParam(value="objectBType", required = false) int objectBType, 
+			@RequestParam(value="objectBId", required = false) int objectBId, 
+			@RequestParam(value="objectBQuantity", required = false) int objectBQuantity, 
+			@RequestParam(value="rewardType", required = true) int rewardType, 
+			@RequestParam(value="rewardValue", required = true) double rewardValue) throws Exception{
+		return goodsService.updatePromotion(userId, id, forbidMemberDiscount, objectAType, objectAId, objectAQuantity, objectBType, objectBId, objectBQuantity, rewardType, rewardValue);
+	}
+	
+	@RequestMapping(value = "promotion/queryallpromotion", method = {RequestMethod.POST, RequestMethod.GET})
+	public @ResponseBody ObjectListResult queryAllPromotion() throws Exception{
+		return goodsService.queryAllPromotion();
+	}
+	
+	@RequestMapping(value = "promotion/deletepromotion", method = {RequestMethod.POST})
+	public @ResponseBody ObjectResult deletePromotion(
+			@RequestParam(value="userId", required = true) int userId,
+			@RequestParam(value="id", required = true) int id) throws Exception{
+		return goodsService.deletePromotion(userId, id);
+	}
 }
