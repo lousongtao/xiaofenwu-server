@@ -37,7 +37,9 @@ import com.shuishou.retailer.goods.models.ICategory1DataAccessor;
 import com.shuishou.retailer.goods.models.ICategory2DataAccessor;
 import com.shuishou.retailer.goods.models.IGoodsDataAccessor;
 import com.shuishou.retailer.goods.models.IPackageBindDataAccessor;
+import com.shuishou.retailer.goods.models.IPromotionDataAccessor;
 import com.shuishou.retailer.goods.models.PackageBind;
+import com.shuishou.retailer.goods.models.Promotion;
 import com.shuishou.retailer.views.ObjectListResult;
 import com.shuishou.retailer.views.ObjectResult;
 import com.shuishou.retailer.views.Result;
@@ -54,6 +56,8 @@ public class GoodsService implements IGoodsService {
 	@Autowired
 	private IUserDataAccessor userDA;
 	
+	@Autowired
+	private IPromotionDataAccessor promotionDA;
 	
 	@Autowired
 	private HttpServletRequest request;
@@ -454,6 +458,75 @@ public class GoodsService implements IGoodsService {
 				Hibernate.initialize(goods);
 			}
 		}
+	}
+
+	@Override
+	@Transactional
+	public ObjectResult addPromotion(int userId, boolean forbidMemberDiscount, int objectAType, int objectAId,
+			int objectAQuantity, int objectBType, int objectBId, int objectBQuantity, int rewardType, double rewardValue) {
+		Promotion p = new Promotion();
+		p.setForbidMemberDiscount(forbidMemberDiscount);
+		p.setObjectAId(objectAId);
+		p.setObjectAType(objectAType);
+		p.setObjectAQuantity(objectAQuantity);
+		p.setObjectBId(objectBId);
+		p.setObjectBType(objectBType);
+		p.setObjectBQuantity(objectBQuantity);
+		p.setRewardType(rewardType);
+		p.setRewardValue(rewardValue);
+		promotionDA.save(p);
+		
+		UserData selfUser = userDA.getUserById(userId);
+		logService.write(selfUser, LogData.LogType.PROMOTION_CHANGE.toString(),
+				"User " + selfUser + " add promotion " + p + ".");
+		return new ObjectResult(Result.OK, true, p);
+	}
+
+	@Override
+	@Transactional
+	public ObjectResult updatePromotion(int userId, int id, boolean forbidMemberDiscount, int objectAType,
+			int objectAId, int objectAQuantity, int objectBType, int objectBId, int objectBQuantity, int rewardType,
+			double rewardValue) {
+		Promotion p = promotionDA.getPromotionById(id);
+		if (p == null){
+			return new ObjectResult("cannot find promotion object by id "+ id, false);
+		}
+		p.setForbidMemberDiscount(forbidMemberDiscount);
+		p.setObjectAId(objectAId);
+		p.setObjectAType(objectAType);
+		p.setObjectAQuantity(objectAQuantity);
+		p.setObjectBId(objectBId);
+		p.setObjectBType(objectBType);
+		p.setObjectBQuantity(objectBQuantity);
+		p.setRewardType(rewardType);
+		p.setRewardValue(rewardValue);
+		promotionDA.save(p);
+		
+		UserData selfUser = userDA.getUserById(userId);
+		logService.write(selfUser, LogData.LogType.PROMOTION_CHANGE.toString(),
+				"User " + selfUser + " update promotion " + p + ".");
+		return new ObjectResult(Result.OK, true, p);
+	}
+
+	@Override
+	@Transactional
+	public ObjectResult deletePromotion(int userId, int id) {
+		Promotion p = promotionDA.getPromotionById(id);
+		if (p == null){
+			return new ObjectResult("cannot find promotion object by id "+ id, false);
+		}
+		promotionDA.delete(p);
+		UserData selfUser = userDA.getUserById(userId);
+		logService.write(selfUser, LogData.LogType.PROMOTION_CHANGE.toString(),
+				"User " + selfUser + " delete promotion " + p + ".");
+		return new ObjectResult(Result.OK, true);
+	}
+
+	@Override
+	@Transactional
+	public ObjectListResult queryAllPromotion() {
+		List<Promotion> ps = promotionDA.getAllPromotion();
+		return new ObjectListResult(Result.OK, true, ps);
 	}
 
 	

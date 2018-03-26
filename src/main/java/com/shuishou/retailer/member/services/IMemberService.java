@@ -20,5 +20,8 @@ public interface IMemberService {
 	ObjectListResult queryMemberBalance(int memberId);
 	ObjectListResult queryMemberScore(int memberId);
 	
-	
+	ObjectListResult queryMemberUpgrade();
+	ObjectResult addMemberUpgrade(int userId, String compareField, double smallValue, int smallRelation, double bigValue, int bigRelation, String executeField, double executeValue);
+	ObjectResult updateMemberUpgrade(int userId, int id, String compareField, double smallValue, int smallRelation, double bigValue, int bigRelation, String executeField, double executeValue);
+	ObjectResult deleteMemberUpgrade(int userId, int id);
 }

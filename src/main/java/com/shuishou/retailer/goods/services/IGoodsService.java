@@ -35,4 +35,9 @@ public interface IGoodsService {
 	public ObjectResult updatePackageBind(int userId, int packageBindId, int bigPackageId, int smallPackageId, int rate);
 	public ObjectListResult queryPackageBind(int userId);
 	public Result deletePackageBind(int userId, int packageBindId);
+	
+	public ObjectResult addPromotion(int userId, boolean forbidMemberDiscount, int objectAType, int objectAId, int objectAQuantity, int objectBType, int objectBId, int objectBQuantity, int rewardType, double rewardValue);
+	public ObjectResult updatePromotion(int userId, int id, boolean forbidMemberDiscount, int objectAType, int objectAId, int objectAQuantity, int objectBType, int objectBId, int objectBQuantity, int rewardType, double rewardValue);
+	public ObjectResult deletePromotion(int userId, int id);
+	public ObjectListResult queryAllPromotion();
 }

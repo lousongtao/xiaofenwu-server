@@ -195,4 +195,53 @@ public class MemberController extends BaseController {
 		}
 	}
 
+	@RequestMapping(value = "/member/addmemberupgrade", method = {RequestMethod.POST})
+	public @ResponseBody ObjectResult addMemberUpgrade(
+			@RequestParam(value = "userId", required = true) int userId,
+			@RequestParam(value = "compareField", required = true) String compareField,
+			@RequestParam(value = "smallRelation", required = true) int smallRelation,
+			@RequestParam(value = "bigRelation", required = true) int bigRelation,
+			@RequestParam(value = "executeField", required = true) String executeField,
+			@RequestParam(value = "smallValue", required = true) double smallValue,
+			@RequestParam(value = "bigValue", required = true) double bigValue,
+			@RequestParam(value = "executeValue", required = true) double executeValue) throws Exception{
+		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_UPDATE_MEMBERUPGRADE)){
+			return new ObjectResult("no_permission", false);
+		}
+		return memberService.addMemberUpgrade(userId, compareField, smallValue, smallRelation, bigValue, bigRelation, executeField, executeValue);
+	}
+	
+	@RequestMapping(value = "/member/updatememberupgrade", method = {RequestMethod.POST})
+	public @ResponseBody ObjectResult updateMemberUpgrade(
+			@RequestParam(value = "userId", required = true) int userId,
+			@RequestParam(value = "id", required = true) int id,
+			@RequestParam(value = "compareField", required = true) String compareField,
+			@RequestParam(value = "smallRelation", required = true) int smallRelation,
+			@RequestParam(value = "bigRelation", required = true) int bigRelation,
+			@RequestParam(value = "executeField", required = true) String executeField,
+			@RequestParam(value = "smallValue", required = true) double smallValue,
+			@RequestParam(value = "bigValue", required = true) double bigValue,
+			@RequestParam(value = "executeValue", required = true) double executeValue) throws Exception{
+		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_UPDATE_MEMBERUPGRADE)){
+			return new ObjectResult("no_permission", false);
+		}
+		return memberService.updateMemberUpgrade(userId, id, compareField, smallValue, smallRelation, bigValue, bigRelation, executeField, executeValue);
+	}
+	
+	@RequestMapping(value = "/member/querymemberupgrade", method = {RequestMethod.POST, RequestMethod.GET})
+	public @ResponseBody ObjectListResult queryMemberUpgrade() throws Exception{
+		return memberService.queryMemberUpgrade();
+	}
+	
+	@RequestMapping(value = "/member/deletememberupgrade", method = {RequestMethod.POST})
+	public @ResponseBody ObjectResult deleteMemberUpgrade(
+			@RequestParam(value = "userId", required = true) int userId,
+			@RequestParam(value = "id", required = true) int id) throws Exception{
+		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_UPDATE_MEMBERUPGRADE)){
+			return new ObjectResult("no_permission", false);
+		}
+		return memberService.deleteMemberUpgrade(userId, id);
+	}
+	
+	
 }
