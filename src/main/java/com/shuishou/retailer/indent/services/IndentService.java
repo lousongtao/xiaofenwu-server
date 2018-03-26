@@ -263,8 +263,9 @@ public class IndentService implements IIndentService {
 			}
 		}
 		int count = indentDA.getIndentCount(starttime, endtime, payway, member, types);
-		if (count >= 1000)
-			return new ObjectListResult("Record is over 1000, please change the filter", false, null, count);
+		if (count >= 10000)
+			return new ObjectListResult("Record is over 10000, please change the filter", false, null, count);
+		limit = 10000;
 		List<Indent> indents = indentDA.getIndents(start, limit, starttime, endtime, payway, member, indentCode, types, orderbys, orderbydescs);
 		if (indents == null || indents.isEmpty())
 			return new ObjectListResult(Result.OK, true, null, 0);
