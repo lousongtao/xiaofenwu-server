@@ -78,7 +78,7 @@ public class IndentService implements IIndentService {
 	
 	@Override
 	@Transactional(rollbackFor=DataCheckException.class)
-	public synchronized ObjectResult saveIndent(int userId, JSONArray jsonOrder, String payWay, double paidPrice, double adjustPrice,String memberCard) throws DataCheckException {
+	public synchronized ObjectResult saveIndent(int userId, JSONArray jsonOrder, String payWay, double paidPrice, double adjustPrice, String discountTemplate, String memberCard) throws DataCheckException {
 		
 		UserData selfUser = userDA.getUserById(userId);
 		
@@ -114,6 +114,7 @@ public class IndentService implements IIndentService {
 		indent.setAdjustPrice(adjustPrice);
 		indent.setMemberCard(memberCard);
 		indent.setPayWay(payWay);
+		indent.setDiscountTemplate(discountTemplate);
 		indent.setIndentType(ConstantValue.INDENT_TYPE_ORDER);
 		indent.setOperator(selfUser.getUsername());
 		indentDA.save(indent);
@@ -263,9 +264,8 @@ public class IndentService implements IIndentService {
 			}
 		}
 		int count = indentDA.getIndentCount(starttime, endtime, payway, member, types);
-		if (count >= 10000)
-			return new ObjectListResult("Record is over 10000, please change the filter", false, null, count);
-		limit = 10000;
+		if (count >= 1000 && limit < 1000)
+			return new ObjectListResult("Record is over 1000, please change the filter", false, null, count);
 		List<Indent> indents = indentDA.getIndents(start, limit, starttime, endtime, payway, member, indentCode, types, orderbys, orderbydescs);
 		if (indents == null || indents.isEmpty())
 			return new ObjectListResult(Result.OK, true, null, 0);
@@ -350,6 +350,7 @@ public class IndentService implements IIndentService {
 		indent.setPaidPrice(preindent.getPaidPrice());
 		indent.setTotalPrice(preindent.getTotalPrice());
 		indent.setPayWay(preindent.getPayWay());
+		indent.setDiscountTemplate(preindent.getDiscountTemplate());
 		indent.setIndentType(ConstantValue.INDENT_TYPE_ORDER_FROMPREBUY);
 		indent.setOriginIndent(preindent);
 		
@@ -416,7 +417,7 @@ public class IndentService implements IIndentService {
 	@Override
 	@Transactional
 	public ObjectResult prebuyIndent(int userId, JSONArray jsonOrder, String payWay, double paidPrice, double adjustPrice,
-			String memberCard, boolean paid) {
+			String memberCard, String discountTemplate, boolean paid) {
 		UserData selfUser = userDA.getUserById(userId);
 		double totalprice = 0;
 		Indent indent = new Indent();
@@ -448,6 +449,7 @@ public class IndentService implements IIndentService {
 		indent.setAdjustPrice(adjustPrice);
 		indent.setMemberCard(memberCard);
 		indent.setPayWay(payWay);
+		indent.setDiscountTemplate(discountTemplate);
 		if (paid)
 			indent.setIndentType(ConstantValue.INDENT_TYPE_PREBUY_PAID);
 		else 

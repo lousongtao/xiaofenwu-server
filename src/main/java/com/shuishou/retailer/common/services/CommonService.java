@@ -182,10 +182,11 @@ public class CommonService implements ICommonService {
 
 	@Override
 	@Transactional
-	public ObjectResult saveDiscountTemplate(int userId, String name, double rate) {
+	public ObjectResult saveDiscountTemplate(int userId, String name, double value, int type) {
 		DiscountTemplate t = new DiscountTemplate();
 		t.setName(name);
-		t.setRate(rate);
+		t.setValue(value);
+		t.setType(type);
 		discountTemplateDA.insertDiscountTemplate(t);
 		
 		// write log.

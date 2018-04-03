@@ -48,6 +48,7 @@ INSERT INTO `retailer`.`permission` (`id`, `name`) VALUES ('13', 'UPDATE_MEMBERS
 INSERT INTO `retailer`.`permission` (`id`, `name`) VALUES ('14', 'UPDATE_MEMBERBALANCE');
 INSERT INTO `retailer`.`permission` (`id`, `name`) VALUES ('15', 'UPDATE_PACKAGEBIND');
 INSERT INTO `retailer`.`permission` (`id`, `name`) VALUES ('16', 'UPDATE_MEMBERUPGRADE');
+INSERT INTO `retailer`.`permission` (`id`, `name`) VALUES ('17', 'PROMOTION');
 
 
 INSERT INTO `retailer`.`user_permission` (`permission_id`, `user_id`) VALUES ('1', '1'); 
@@ -65,4 +66,5 @@ INSERT INTO `retailer`.`user_permission` (`permission_id`, `user_id`) VALUES ('1
 INSERT INTO `retailer`.`user_permission` (`permission_id`, `user_id`) VALUES ('13', '1'); 
 INSERT INTO `retailer`.`user_permission` (`permission_id`, `user_id`) VALUES ('14', '1');
 INSERT INTO `retailer`.`user_permission` (`permission_id`, `user_id`) VALUES ('15', '1');
-INSERT INTO `retailer`.`user_permission` (`permission_id`, `user_id`) VALUES ('16', '1'); 
+INSERT INTO `retailer`.`user_permission` (`permission_id`, `user_id`) VALUES ('16', '1');
+INSERT INTO `retailer`.`user_permission` (`permission_id`, `user_id`) VALUES ('17', '1'); 

@@ -15,7 +15,7 @@ public interface ICommonService {
 	
 	ObjectListResult getDiscountTemplates();
 	
-	ObjectResult saveDiscountTemplate(int userId, String name, double rate);
+	ObjectResult saveDiscountTemplate(int userId, String name, double value, int type);
 	
 	ObjectResult deleteDiscountTemplate(int userId, int id);
 	

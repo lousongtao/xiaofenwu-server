@@ -85,11 +85,12 @@ public class CommonController extends BaseController {
 	public @ResponseBody Result saveDiscountTemplate(
 			@RequestParam(value = "userId", required = true) int userId,
 			@RequestParam(value="name", required = true) String name,
-			@RequestParam(value="rate", required = true) double rate) throws Exception{
+			@RequestParam(value="value", required = true) double value,
+			@RequestParam(value="type", required = true) int type) throws Exception{
 		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_UPDATE_DISCOUNTTEMPLATE)){
 			return new Result("no_permission");
 		}
-		return commonService.saveDiscountTemplate(userId, name, rate);
+		return commonService.saveDiscountTemplate(userId, name, value, type);
 	}
 	
 	@RequestMapping(value="/common/deletediscounttemplate", method = {RequestMethod.POST, RequestMethod.GET})

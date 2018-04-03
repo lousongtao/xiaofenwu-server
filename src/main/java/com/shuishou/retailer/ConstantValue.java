@@ -34,6 +34,7 @@ public class ConstantValue {
 	public static final String PERMISSION_UPDATE_MEMBERBALANCE = "UPDATE_MEMBERBALANCE";
 	public static final String PERMISSION_UPDATE_PACKAGEBIND = "UPDATE_PACKAGEBIND";
 	public static final String PERMISSION_UPDATE_MEMBERUPGRADE = "UPDATE_MEMBERUPGRADE";
+	public static final String PERMISSION_PROMOTION = "PROMOTION";
 	
 	public final static String SPLITTAG_PERMISSION = ";";
 	

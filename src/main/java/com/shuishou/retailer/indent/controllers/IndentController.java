@@ -40,10 +40,11 @@ public class IndentController extends BaseController {
 			@RequestParam(value="payWay", required = true) String payWay,
 			@RequestParam(value="paidPrice", required = true) double paidPrice,
 			@RequestParam(value="adjustPrice", required = false, defaultValue="0") double adjustPrice,
+			@RequestParam(value = "discountTemplate", required = false) String discountTemplate,
 			@RequestParam(value="member", required = false, defaultValue = "") String member) throws Exception{
 		JSONArray jsonOrder = new JSONArray(indents);
 		try{
-			ObjectResult result = indentService.saveIndent(userId, jsonOrder, payWay, paidPrice, adjustPrice,member);
+			ObjectResult result = indentService.saveIndent(userId, jsonOrder, payWay, paidPrice, adjustPrice, discountTemplate, member);
 			return result;
 		} catch(DataCheckException ex){
 			return new ObjectResult(ex.getMessage(), false);
@@ -75,10 +76,11 @@ public class IndentController extends BaseController {
 			@RequestParam(value="paidPrice", required = true) double paidPrice,
 			@RequestParam(value="adjustPrice", required = false, defaultValue="0") double adjustPrice,
 			@RequestParam(value="paid", required = true) boolean paid,
+			@RequestParam(value = "discountTemplate", required = false) String discountTemplate,
 			@RequestParam(value="member", required = false, defaultValue = "") String member) throws Exception{
 		JSONArray jsonOrder = new JSONArray(indents);
 		
-		return indentService.prebuyIndent(userId, jsonOrder, payWay, paidPrice, adjustPrice, member, paid);
+		return indentService.prebuyIndent(userId, jsonOrder, payWay, paidPrice, adjustPrice, member, discountTemplate, paid);
 	}
 	
 	/**
@@ -97,7 +99,7 @@ public class IndentController extends BaseController {
 	public @ResponseBody ObjectListResult queryIndent(
 			@RequestParam(value = "page", required = false, defaultValue = "0") String pageStr,
 			@RequestParam(value = "start", required = false, defaultValue = "0") String startStr,
-			@RequestParam(value = "limit", required = false, defaultValue = "300") String limitStr,
+			@RequestParam(value = "limit", required = false, defaultValue = "1000") String limitStr,
 			@RequestParam(value="starttime", required = false) String starttime,
 			@RequestParam(value="endtime", required = false) String endtime,
 			@RequestParam(value="payway", required = false) String payway,

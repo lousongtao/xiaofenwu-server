@@ -275,6 +275,9 @@ public class GoodsController extends BaseController {
 			@RequestParam(value="objectBQuantity", required = false) int objectBQuantity, 
 			@RequestParam(value="rewardType", required = true) int rewardType, 
 			@RequestParam(value="rewardValue", required = true) double rewardValue) throws Exception{
+		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_PROMOTION)){
+			return new ObjectResult("no_permission", false);
+		}
 		return goodsService.addPromotion(userId, forbidMemberDiscount, objectAType, objectAId, objectAQuantity, objectBType, objectBId, objectBQuantity, rewardType, rewardValue);
 	}
 	
@@ -291,6 +294,9 @@ public class GoodsController extends BaseController {
 			@RequestParam(value="objectBQuantity", required = false) int objectBQuantity, 
 			@RequestParam(value="rewardType", required = true) int rewardType, 
 			@RequestParam(value="rewardValue", required = true) double rewardValue) throws Exception{
+		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_PROMOTION)){
+			return new ObjectResult("no_permission", false);
+		}
 		return goodsService.updatePromotion(userId, id, forbidMemberDiscount, objectAType, objectAId, objectAQuantity, objectBType, objectBId, objectBQuantity, rewardType, rewardValue);
 	}
 	
@@ -303,6 +309,9 @@ public class GoodsController extends BaseController {
 	public @ResponseBody ObjectResult deletePromotion(
 			@RequestParam(value="userId", required = true) int userId,
 			@RequestParam(value="id", required = true) int id) throws Exception{
+		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_PROMOTION)){
+			return new ObjectResult("no_permission", false);
+		}
 		return goodsService.deletePromotion(userId, id);
 	}
 }

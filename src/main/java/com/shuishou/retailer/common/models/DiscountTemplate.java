@@ -21,15 +21,19 @@ public class DiscountTemplate {
 	@Column(name = "name", nullable = false, unique = true)
 	private String name;
 	
-	@Column(name = "rate", nullable = false, precision = 8, scale = 2)
-	private double rate;
+	@Column(name = "value", nullable = false, precision = 8, scale = 2)
+	private double value;
+	
+	@Column(nullable = false)
+	private int type;
 
 	public DiscountTemplate(){}
 	
-	public DiscountTemplate(int id, String name, double rate){
+	public DiscountTemplate(int id, String name, double value, int type){
 		this.id = id;
 		this.name = name;
-		this.rate = rate;
+		this.value = value;
+		this.type = type;
 	}
 
 	public int getId() {
@@ -40,12 +44,21 @@ public class DiscountTemplate {
 		this.id = id;
 	}
 
-	public double getRate() {
-		return rate;
+
+	public double getValue() {
+		return value;
 	}
 
-	public void setRate(double rate) {
-		this.rate = rate;
+	public void setValue(double value) {
+		this.value = value;
+	}
+
+	public int getType() {
+		return type;
+	}
+
+	public void setType(int type) {
+		this.type = type;
 	}
 
 	public String getName() {
