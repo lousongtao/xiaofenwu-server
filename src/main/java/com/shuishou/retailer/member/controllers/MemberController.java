@@ -243,5 +243,14 @@ public class MemberController extends BaseController {
 		return memberService.deleteMemberUpgrade(userId, id);
 	}
 	
-	
+	@RequestMapping(value = "/member/changestatusmemberupgrade", method = {RequestMethod.POST})
+	public @ResponseBody ObjectResult changeMemberUpgrade(
+			@RequestParam(value = "userId", required = true) int userId,
+			@RequestParam(value = "id", required = true) int id,
+			@RequestParam(value = "status", required = true) int status) throws Exception{
+		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_UPDATE_MEMBERUPGRADE)){
+			return new ObjectResult("no_permission", false);
+		}
+		return memberService.changeStatusMemberUpgrade(userId, id, status);
+	}
 }

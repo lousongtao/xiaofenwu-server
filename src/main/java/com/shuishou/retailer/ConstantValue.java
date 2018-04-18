@@ -91,6 +91,9 @@ public class ConstantValue {
 	public static final int MEMBERUPGRADE_RELATION_LESS = 4;//小于
 	public static final int MEMBERUPGRADE_RELATION_LESSEQUAL = 5;//小于等于
 	
+	public static final int MEMBERUPGRADE_STATUS_AVAILABLE = 1;
+	public static final int MEMBERUPGRADE_STATUS_UNAVAILABLE = 2;
+	
 	public static final int PROMOTION_GOODS = 1;
 	public static final int PROMOTION_CATEGORY2 = 2;
 	public static final int PROMOTION_CATEGORY1 = 3;

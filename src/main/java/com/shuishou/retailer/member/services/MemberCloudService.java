@@ -131,10 +131,16 @@ public class MemberCloudService implements IMemberCloudService{
 
 	@Override
 	public ObjectResult memberRecharge(int userId, int id, double recharge) {
+		String branchName = "";
+		Configs config = configDA.getConfigsByName(ConstantValue.CONFIGS_BRANCHNAME);
+		if (config != null){
+			branchName = config.getValue();
+		}
 		Map<String, String> params = new HashMap<>();
 		params.put("customerName", ServerProperties.MEMBERCUSTOMERNAME);
 		params.put("id",String.valueOf(id));
 		params.put("rechargeValue", String.valueOf(recharge));
+		params.put("branchName", branchName);
 		String url = "member/memberrecharge";
 		String response = HttpUtil.getJSONObjectByPost(ServerProperties.MEMBERCLOUDLOCATION + url, params);
 		if (response == null){
@@ -267,6 +273,8 @@ public class MemberCloudService implements IMemberCloudService{
 		if (mus != null && !mus.isEmpty()) {
 			for (int i = 0; i < mus.size(); i++) {
 				MemberUpgrade mu = mus.get(i);
+				if (mu.getStatus() == ConstantValue.MEMBERUPGRADE_STATUS_UNAVAILABLE)
+					continue;
 				double compareValue = 0;
 				if ("score".equalsIgnoreCase(mu.getCompareField())){
 					compareValue = m.getScore();

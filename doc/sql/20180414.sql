@@ -1,0 +1,1 @@
+update retailer.member_upgrade set status = 1 where id > 0;

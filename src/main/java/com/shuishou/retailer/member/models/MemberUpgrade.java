@@ -46,7 +46,19 @@ public class MemberUpgrade {
 	@Column(nullable=false)
 	private double executeValue;
 	
+	@Column(nullable = false)
+	private int status = ConstantValue.MEMBERUPGRADE_STATUS_AVAILABLE;
 	
+	
+	
+	public int getStatus() {
+		return status;
+	}
+
+	public void setStatus(int status) {
+		this.status = status;
+	}
+
 	public int getId() {
 		return id;
 	}

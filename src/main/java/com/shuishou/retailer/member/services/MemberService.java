@@ -306,6 +306,8 @@ public class MemberService implements IMemberService{
 		if (mus != null && !mus.isEmpty()) {
 			for (int i = 0; i < mus.size(); i++) {
 				MemberUpgrade mu = mus.get(i);
+				if (mu.getStatus() == ConstantValue.MEMBERUPGRADE_STATUS_UNAVAILABLE)
+					continue;
 				double compareValue = 0;
 				if ("score".equalsIgnoreCase(mu.getCompareField())){
 					compareValue = m.getScore();
@@ -406,5 +408,17 @@ public class MemberService implements IMemberService{
 		return new ObjectListResult(Result.OK, true, mus);
 	}
 
-	
+	@Override
+	@Transactional
+	public ObjectResult changeStatusMemberUpgrade(int userId, int id, int status){
+		MemberUpgrade mu = memberUpgradeDA.getMemberUpgrade(id);
+		if (mu == null)
+			return new ObjectResult("cannot find memberupgrade by id "+ id, false, null);
+		mu.setStatus(status);
+		memberUpgradeDA.save(mu);
+		
+		UserData selfUser = userDA.getUserById(userId);
+		logService.write(selfUser, LogData.LogType.MEMBERUPGRADE_CHANGE.toString(), "User " + selfUser + " update memberupgrade status to " + status);
+		return new ObjectResult(Result.OK, true, mu);
+	}
 }
