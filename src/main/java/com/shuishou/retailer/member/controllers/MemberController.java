@@ -191,7 +191,8 @@ public class MemberController extends BaseController {
 		if (ServerProperties.MEMBERLOCATION_LOCAL.equals(ServerProperties.MEMBERLOCATION)){
 			return memberService.memberRecharge(userId, id, rechargeValue);
 		} else {
-			return memberCloudService.memberRecharge(userId, id, rechargeValue);
+			String branchName = "";
+			return memberCloudService.memberRecharge(userId, id, rechargeValue, branchName);
 		}
 	}
 

@@ -130,12 +130,7 @@ public class MemberCloudService implements IMemberCloudService{
 	}
 
 	@Override
-	public ObjectResult memberRecharge(int userId, int id, double recharge) {
-		String branchName = "";
-		Configs config = configDA.getConfigsByName(ConstantValue.CONFIGS_BRANCHNAME);
-		if (config != null){
-			branchName = config.getValue();
-		}
+	public ObjectResult memberRecharge(int userId, int id, double recharge, String branchName) {
 		Map<String, String> params = new HashMap<>();
 		params.put("customerName", ServerProperties.MEMBERCUSTOMERNAME);
 		params.put("id",String.valueOf(id));
@@ -257,8 +252,9 @@ public class MemberCloudService implements IMemberCloudService{
 			return new ObjectResult("return false while update member. URL = " + url + ", response = "+response, false);
 		}
 		Member member = result.data;
-		member = checkMemberUpgrade(member);
-		return new ObjectResult(Result.OK, true, result.data);
+		if (member != null)
+			member = checkMemberUpgrade(member);
+		return new ObjectResult(Result.OK, true, member);
 	}
 	
 	/**
@@ -344,7 +340,7 @@ public class MemberCloudService implements IMemberCloudService{
 		if (response == null){
 			return new ObjectListResult("get null from server for query member balance. URL = " + url + ", param = "+ params, false);
 		}
-		Gson gson = new GsonBuilder().setDateFormat(ConstantValue.DATE_PATTERN_YMD).create();
+		Gson gson = new GsonBuilder().setDateFormat(ConstantValue.DATE_PATTERN_YMDHMS).create();
 		HttpResult<ArrayList<MemberBalance>> result = gson.fromJson(response, new TypeToken<HttpResult<ArrayList<MemberBalance>>>(){}.getType());
 		if (!result.success){
 			return new ObjectListResult("return false while query member balance. URL = " + url + ", response = "+response, false);
@@ -361,7 +357,7 @@ public class MemberCloudService implements IMemberCloudService{
 		if (response == null){
 			return new ObjectListResult("get null from server for query member score. URL = " + url + ", param = "+ params, false);
 		}
-		Gson gson = new GsonBuilder().setDateFormat(ConstantValue.DATE_PATTERN_YMD).create();
+		Gson gson = new GsonBuilder().setDateFormat(ConstantValue.DATE_PATTERN_YMDHMS).create();
 		HttpResult<ArrayList<MemberScore>> result = gson.fromJson(response, new TypeToken<HttpResult<ArrayList<MemberScore>>>(){}.getType());
 		if (!result.success){
 			return new ObjectListResult("return false while query member score. URL = " + url + ", response = "+response, false);
