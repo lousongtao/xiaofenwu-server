@@ -2,4 +2,5 @@
     1. add STATUS for memberupgrade
     2. add BRANCHNAME for member recharge
 	
-	
+20180525
+	1. statistics orders by WEEK & MONTH
