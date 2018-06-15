@@ -46,13 +46,18 @@ public class StatisticsService implements IStatisticsService{
 	@Transactional
 	public ObjectResult statistics(int userId, Date startDate, Date endDate, int dimension, int sellGranularity,
 			int sellByPeriod) {
+		long l3 = 0;
+		long l1 = System.currentTimeMillis();
 		List<Indent> indents = indentDA.getIndentsByTime(startDate, endDate);
 		if (indents == null || indents.isEmpty())
 			return new ObjectResult("No order paid in this period", false);
+		long l2 = System.currentTimeMillis();
 		ObjectResult result = new ObjectResult(Result.OK, true);
 		if (dimension == ConstantValue.STATISTICS_DIMENSTION_PAYWAY){
 			ArrayList<StatItem> stats = statisticsPayway(indents);
 			result.data = stats;
+			l3 = System.currentTimeMillis();
+			logger.debug("do statistics by payway use time  " + (l3-l2));
 		} else if (dimension == ConstantValue.STATISTICS_DIMENSTION_SELL){
 			if (sellGranularity != ConstantValue.STATISTICS_SELLGRANULARITY_BYGOODS
 					&& sellGranularity != ConstantValue.STATISTICS_SELLGRANULARITY_BYCATEGORY2
@@ -61,6 +66,8 @@ public class StatisticsService implements IStatisticsService{
 			}
 			ArrayList<StatItem> stats = statisticsSell(indents, sellGranularity);
 			result.data = stats;
+			l3 = System.currentTimeMillis();
+			logger.debug("do statistics by payway use time  " + (l3-l2));
 		} else if (dimension == ConstantValue.STATISTICS_DIMENSTION_PERIODSELL){
 			if (sellByPeriod != ConstantValue.STATISTICS_PERIODSELL_PERDAY
 					&& sellByPeriod != ConstantValue.STATISTICS_PERIODSELL_PERHOUR
@@ -70,7 +77,13 @@ public class StatisticsService implements IStatisticsService{
 			}
 			ArrayList<StatItem> stats = statisticsSellByPeriod(indents, sellByPeriod, startDate, endDate);
 			result.data = stats;
+			l3 = System.currentTimeMillis();
+			logger.debug("do statistics by payway use time  " + (l3-l2));
 		}
+		logger.debug("statistics, query use time = " + (l2 - l1) + ", stat use time = " + (l3 - l2) 
+				+ ", dimension = " + dimension + ", sellGranularity = " + sellGranularity + ", sellByPeriod = " + sellByPeriod 
+				+ ", indent size = " + indents.size() 
+				+ ", start = " + ConstantValue.DFYMD.format(startDate) + ", end = " + ConstantValue.DFYMD.format(endDate));
 		//format double value
 		if (result.data != null){
 			for(StatItem si : (ArrayList<StatItem>)result.data){

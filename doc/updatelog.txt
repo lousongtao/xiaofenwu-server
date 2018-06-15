@@ -4,3 +4,6 @@
 	
 20180525
 	1. statistics orders by WEEK & MONTH
+
+20180615
+	1. record consume time into log file, including indent function and statistic

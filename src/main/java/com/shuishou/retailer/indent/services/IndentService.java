@@ -79,7 +79,7 @@ public class IndentService implements IIndentService {
 	@Override
 	@Transactional(rollbackFor=DataCheckException.class)
 	public synchronized ObjectResult saveIndent(int userId, JSONArray jsonOrder, String payWay, double paidPrice, double adjustPrice, String discountTemplate, String memberCard) throws DataCheckException {
-		
+		long l1 = System.currentTimeMillis();
 		UserData selfUser = userDA.getUserById(userId);
 		
 		double totalprice = 0;
@@ -119,12 +119,15 @@ public class IndentService implements IIndentService {
 		indent.setOperator(selfUser.getUsername());
 		indentDA.save(indent);
 		
+		long membertime = 0;
 		if (memberCard != null && memberCard.length() > 0){
 			ObjectResult result = null;
 			if (ServerProperties.MEMBERLOCATION_LOCAL.equals(ServerProperties.MEMBERLOCATION)){
 				result = memberService.recordMemberConsumption(memberCard, paidPrice);
 			} else {
+				long l3 = System.currentTimeMillis();
 				result = memberCloudService.recordMemberConsumption(memberCard, paidPrice);
+				membertime = System.currentTimeMillis() - l3;
 			}
 			if (!result.success)
 				throw new DataCheckException(result.result);
@@ -132,13 +135,15 @@ public class IndentService implements IIndentService {
 		
 		
 		logService.write(selfUser, LogData.LogType.INDENT_MAKE.toString(), "User " + selfUser + " make order : " + indent.getId());
-		
+		long l4 = System.currentTimeMillis();
+		logger.debug((l4 - l1) + "ms to save indent, including membertime " + membertime + "ms");
 		return new ObjectResult(Result.OK, true, indent);
 	}
 	
 	@Override
 	@Transactional(rollbackFor=DataCheckException.class)
 	public ObjectResult refundIndent(int userId, JSONArray jsonOrder, String memberCard, double paidPrice, double adjustPrice, boolean returnToStorage, String payWay) throws DataCheckException {
+		long l1 = System.currentTimeMillis();
 		UserData selfUser = userDA.getUserById(userId);
 		double totalprice = 0;
 		double totalSoldPrice = 0;
@@ -178,17 +183,21 @@ public class IndentService implements IIndentService {
 		indent.setIndentType(ConstantValue.INDENT_TYPE_REFUND);
 		indentDA.save(indent);
 		
+		long membertime = 0;
 		if (memberCard != null && memberCard.length() > 0){
 			if (ServerProperties.MEMBERLOCATION_LOCAL.equals(ServerProperties.MEMBERLOCATION)){
 				memberService.recordMemberConsumption(memberCard, paidPrice);
 			} else {
+				long l3 = System.currentTimeMillis();
 				memberCloudService.recordMemberConsumption(memberCard, paidPrice);
+				membertime = System.currentTimeMillis() - l3;
 			}
 		}
 		
 		
 		logService.write(selfUser, LogData.LogType.INDENT_MAKE.toString(), "User " + selfUser + " make refund order : " + indent.getId());
-		
+		long l4 = System.currentTimeMillis();
+		logger.debug((l4 - l1) + "ms to refund indent, including membertime " + membertime + "ms");
 		return new ObjectResult(Result.OK, true, indent);
 	}
 	
@@ -224,6 +233,7 @@ public class IndentService implements IIndentService {
 	@Override
 	@Transactional
 	public ObjectListResult queryIndent(int start, int limit, String sstarttime, String sendtime, String payway, String member, String indentCode, Integer[] types, String orderby, String orderbydesc) {
+		long l1 = System.currentTimeMillis();
 		if (orderby != null && orderby.length() > 0
 				&& orderbydesc != null && orderbydesc.length() > 0){
 			return new ObjectListResult("orderby and orderbydesc are conplicted", false);
@@ -274,12 +284,15 @@ public class IndentService implements IIndentService {
 			Hibernate.initialize(indent);
 			Hibernate.initialize(indent.getItems());
 		}
+		long l4 = System.currentTimeMillis();
+		logger.debug((l4 - l1) + "ms to query indent, params : start = " + start + ", limit = " + limit + ", sStartTime = " + sstarttime + ", sEndTime = " + sendtime + ", payway = " + payway + ", member = " + member + ", indentCode = " + indentCode + ", orderby = " + orderby + ", orderByDesc = " + orderbydesc);
 		return new ObjectListResult(Result.OK, true, (ArrayList<Indent>)indents, count);
 	}
 	
 	@Override
 	@Transactional
 	public ObjectListResult queryIndentForShiftwork(int shiftworkId) {
+		long l1 = System.currentTimeMillis();
 		ShiftWork sw = shiftworkDA.getShiftWorkById(shiftworkId);
 		if (sw == null)
 			return new ObjectListResult("Cannot find Shiftwork record by id" + shiftworkId, false);
@@ -296,12 +309,15 @@ public class IndentService implements IIndentService {
 			Hibernate.initialize(indent);
 			Hibernate.initialize(indent.getItems());
 		}
+		long l4 = System.currentTimeMillis();
+		logger.debug((l4 - l1) + "ms to query indent for shiftwork");
 		return new ObjectListResult(Result.OK, true, (ArrayList<Indent>)indents, indents.size());
 	}
 	
 	@Override
 	@Transactional
 	public ObjectListResult queryPrebuyIndent(int start, int limit, String sStarttime, String sEndtime, String member) {
+		long l1 = System.currentTimeMillis();
 		
 		Date starttime = null;
 		Date endtime = null;
@@ -327,6 +343,8 @@ public class IndentService implements IIndentService {
 			Hibernate.initialize(indent);
 			Hibernate.initialize(indent.getItems());
 		}
+		long l4 = System.currentTimeMillis();
+		logger.debug((l4 - l1) + "ms to query prebuy indent, params : start = " + start + ", limit = " + limit + ", sStartTime = " + sStarttime + ", sEndTime = " + sEndtime + ", member = " + member);
 		return new ObjectListResult(Result.OK, true, (ArrayList<Indent>)indents, 0);
 	}
 
@@ -336,6 +354,7 @@ public class IndentService implements IIndentService {
 	@Override
 	@Transactional(rollbackFor=DataCheckException.class)
 	public ObjectResult changePreOrderToOrder(int userId, int preindentId) throws DataCheckException {
+		long l1 = System.currentTimeMillis();
 		Indent preindent = indentDA.getIndentById(preindentId);
 		if (preindent == null){
 			return new ObjectResult("cannot find indent by id "+preindentId, false);
@@ -377,11 +396,14 @@ public class IndentService implements IIndentService {
 		preindent.setIndentType(ConstantValue.INDENT_TYPE_PREBUY_FINISHED);
 		indentDA.save(preindent);
 		
+		long membertime = 0;
 		if (preindent.getMemberCard() != null && preindent.getMemberCard().length() > 0){
 			if (ServerProperties.MEMBERLOCATION_LOCAL.equals(ServerProperties.MEMBERLOCATION)){
 				memberService.recordMemberConsumption(preindent.getMemberCard(), indent.getPaidPrice());
 			} else {
+				long l3 = System.currentTimeMillis();
 				memberCloudService.recordMemberConsumption(preindent.getMemberCard(), indent.getPaidPrice());
+				membertime = System.currentTimeMillis() - l3;
 			}
 		}
 		
@@ -389,12 +411,15 @@ public class IndentService implements IIndentService {
 		Hibernate.initialize(indent.getItems());
 		
 		logService.write(selfUser, LogData.LogType.INDENT_MAKE.toString(), "User " + selfUser + " make preorder (id="+preindentId+") to order (id=" + indent.getId()+")");
+		long l4 = System.currentTimeMillis();
+		logger.debug((l4 - l1) + "ms to change preorder to indent, including membertime " + membertime + "ms");
 		return new ObjectResult(Result.OK, true, indent);
 	}
 	
 	@Override
 	@Transactional()
 	public ObjectResult deletePreOrder(int userId, int indentId) {
+		long l1 = System.currentTimeMillis();
 		Indent indent = indentDA.getIndentById(indentId);
 		if (indent == null){
 			return new ObjectResult("cannot find indent by id "+indentId, false);
@@ -403,6 +428,8 @@ public class IndentService implements IIndentService {
 		
 		UserData selfUser = userDA.getUserById(userId);
 		logService.write(selfUser, LogData.LogType.INDENT_MAKE.toString(), "User " + selfUser + " delete preorder : " + indent.getId());
+		long l4 = System.currentTimeMillis();
+		logger.debug((l4 - l1) + "ms to delete preorder");
 		return new ObjectResult(Result.OK, true, indent);
 	}
 	
@@ -418,6 +445,7 @@ public class IndentService implements IIndentService {
 	@Transactional
 	public ObjectResult prebuyIndent(int userId, JSONArray jsonOrder, String payWay, double paidPrice, double adjustPrice,
 			String memberCard, String discountTemplate, boolean paid) {
+		long l1 = System.currentTimeMillis();
 		UserData selfUser = userDA.getUserById(userId);
 		double totalprice = 0;
 		Indent indent = new Indent();
@@ -459,7 +487,8 @@ public class IndentService implements IIndentService {
 		
 		
 		logService.write(selfUser, LogData.LogType.INDENT_MAKE.toString(), "User " + selfUser + " make preorder : " + indent.getId());
-		
+		long l4 = System.currentTimeMillis();
+		logger.debug((l4 - l1) + "ms to make prebuy indent");
 		return new ObjectResult(Result.OK, true, indent);
 		
 	}
@@ -467,6 +496,7 @@ public class IndentService implements IIndentService {
 	@Override
 	@Transactional
 	public ObjectListResult queryGoodsSoldRecord(int goodsId, String sStarttime, String sEndtime, String payway, String member){
+		long l1 = System.currentTimeMillis();
 		Date starttime = null;
 		Date endtime = null;
 		if (sStarttime != null && sStarttime.length() > 0){
@@ -495,6 +525,8 @@ public class IndentService implements IIndentService {
 			record.setSoldTime(ConstantValue.DFYMDHMS.format(detail.getIndent().getCreateTime()));
 			records.add(record);
 		}
+		long l4 = System.currentTimeMillis();
+		logger.debug((l4 - l1) + "ms to query goods sold record, params : goodsId = " + goodsId + ", sStartTime = " + sStarttime + ", sEndTime = " + sEndtime + ", member = " + member);
 		return new ObjectListResult(Result.OK, true, records);
 	}
 }
