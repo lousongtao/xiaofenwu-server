@@ -7,3 +7,6 @@
 
 20180615
 	1. record consume time into log file, including indent function and statistic
+
+20180815
+	1. extend promotion function

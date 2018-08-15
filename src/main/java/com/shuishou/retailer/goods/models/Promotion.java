@@ -9,6 +9,8 @@ import javax.persistence.Table;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.shuishou.retailer.ConstantValue;
+
 @Entity
 @Table
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
@@ -64,6 +66,9 @@ public class Promotion {
 	 */
 	@Column(name = "reward_value", nullable = false)
 	private double rewardValue;
+	
+	@Column(name="available")
+	private boolean available = true;
 
 	public int getId() {
 		return id;
@@ -143,6 +148,15 @@ public class Promotion {
 
 	public void setRewardValue(double rewardValue) {
 		this.rewardValue = rewardValue;
+	}
+
+
+	public boolean isAvailable() {
+		return available;
+	}
+
+	public void setAvailable(boolean available) {
+		this.available = available;
 	}
 
 	@Override

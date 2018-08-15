@@ -25,7 +25,6 @@ import com.shuishou.retailer.indent.models.IndentDetail;
 import com.shuishou.retailer.statistics.views.StatItem;
 import com.shuishou.retailer.views.ObjectResult;
 import com.shuishou.retailer.views.Result;
-import com.sun.istack.internal.NotNull;
 
 
 @Service
@@ -111,7 +110,7 @@ public class StatisticsService implements IStatisticsService{
 	 * @return
 	 */
 	@Transactional
-	private ArrayList<StatItem> statisticsSellByPeriod(List<Indent> indents, int sellByPeriod, @NotNull Date startDate, @NotNull Date endDate){
+	private ArrayList<StatItem> statisticsSellByPeriod(List<Indent> indents, int sellByPeriod, Date startDate, Date endDate){
 		ArrayList<StatItem> stats = new ArrayList<>();
 		//initial time period into map
 		HashMap<String, StatItem> mapPeriod = new HashMap<>();

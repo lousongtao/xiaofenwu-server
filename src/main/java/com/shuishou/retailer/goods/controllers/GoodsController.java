@@ -314,4 +314,14 @@ public class GoodsController extends BaseController {
 		}
 		return goodsService.deletePromotion(userId, id);
 	}
+	
+	@RequestMapping(value = "promotion/changepromotionstatus", method = {RequestMethod.POST})
+	public @ResponseBody ObjectResult changePromotionStatus(
+			@RequestParam(value="userId", required = true) int userId,
+			@RequestParam(value="id", required = true) int id) throws Exception{
+		if (!permissionService.checkPermission(userId, ConstantValue.PERMISSION_PROMOTION)){
+			return new ObjectResult("no_permission", false);
+		}
+		return goodsService.changePromotionStatus(userId, id);
+	}
 }

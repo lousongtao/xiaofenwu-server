@@ -39,5 +39,6 @@ public interface IGoodsService {
 	public ObjectResult addPromotion(int userId, boolean forbidMemberDiscount, int objectAType, int objectAId, int objectAQuantity, int objectBType, int objectBId, int objectBQuantity, int rewardType, double rewardValue);
 	public ObjectResult updatePromotion(int userId, int id, boolean forbidMemberDiscount, int objectAType, int objectAId, int objectAQuantity, int objectBType, int objectBId, int objectBQuantity, int rewardType, double rewardValue);
 	public ObjectResult deletePromotion(int userId, int id);
+	public ObjectResult changePromotionStatus(int userId, int id);
 	public ObjectListResult queryAllPromotion();
 }

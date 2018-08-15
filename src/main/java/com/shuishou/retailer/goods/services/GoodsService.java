@@ -524,6 +524,20 @@ public class GoodsService implements IGoodsService {
 
 	@Override
 	@Transactional
+	public ObjectResult changePromotionStatus(int userId, int id) {
+		Promotion p = promotionDA.getPromotionById(id);
+		if (p == null){
+			return new ObjectResult("cannot find promotion object by id "+ id, false);
+		}
+		p.setAvailable(!p.isAvailable());
+		UserData selfUser = userDA.getUserById(userId);
+		logService.write(selfUser, LogData.LogType.PROMOTION_CHANGE.toString(),
+				"User " + selfUser + " change promotion status to " + !p.isAvailable() + ".");
+		return new ObjectResult(Result.OK, true);
+	}
+	
+	@Override
+	@Transactional
 	public ObjectListResult queryAllPromotion() {
 		List<Promotion> ps = promotionDA.getAllPromotion();
 		return new ObjectListResult(Result.OK, true, ps);
