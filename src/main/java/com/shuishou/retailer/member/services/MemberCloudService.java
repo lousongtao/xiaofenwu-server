@@ -92,11 +92,15 @@ public class MemberCloudService implements IMemberCloudService{
 	}
 
 	@Override
+	@Transactional
 	public ObjectResult updateMemberScore(int userId, int id, double newScore) {
+		Configs configs = configDA.getConfigsByName(ConstantValue.CONFIGS_BRANCHNAME);
+		String branchName = configs == null? "" : configs.getValue();
 		Map<String, String> params = new HashMap<>();
 		params.put("customerName", ServerProperties.MEMBERCUSTOMERNAME);
 		params.put("newScore", String.valueOf(newScore));
 		params.put("id", String.valueOf(id));
+		params.put("branchName", branchName);
 		String url = "member/updatememberscore";
 		String response = HttpUtil.getJSONObjectByPost(ServerProperties.MEMBERCLOUDLOCATION + url, params);
 		if (response == null){
@@ -111,11 +115,15 @@ public class MemberCloudService implements IMemberCloudService{
 	}
 
 	@Override
+	@Transactional
 	public ObjectResult updateMemberBalance(int userId, int id, double newBalance) {
+		Configs configs = configDA.getConfigsByName(ConstantValue.CONFIGS_BRANCHNAME);
+		String branchName = configs == null? "" : configs.getValue();
 		Map<String, String> params = new HashMap<>();
 		params.put("customerName", ServerProperties.MEMBERCUSTOMERNAME);
 		params.put("id",String.valueOf(id));
 		params.put("newBalance", String.valueOf(newBalance));
+		params.put("branchName", branchName);
 		String url = "member/updatememberbalance";
 		String response = HttpUtil.getJSONObjectByPost(ServerProperties.MEMBERCLOUDLOCATION + url, params);
 		if (response == null){
@@ -130,7 +138,10 @@ public class MemberCloudService implements IMemberCloudService{
 	}
 
 	@Override
-	public ObjectResult memberRecharge(int userId, int id, double recharge, String branchName) {
+	@Transactional
+	public ObjectResult memberRecharge(int userId, int id, double recharge) {
+		Configs configs = configDA.getConfigsByName(ConstantValue.CONFIGS_BRANCHNAME);
+		String branchName = configs == null? "" : configs.getValue();
 		Map<String, String> params = new HashMap<>();
 		params.put("customerName", ServerProperties.MEMBERCUSTOMERNAME);
 		params.put("id",String.valueOf(id));
